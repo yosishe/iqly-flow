@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>IQly — Free IQ test: 12 questions, your IQ range and rank</title>
+<meta name="description" content="A free 12-question IQ test, no payment. A free account (email only, no password) shows your IQ range and rank and saves your result with the full answer review.">
+<!--
+  IQly funnel prototype — standalone, offline, no backend, no build step, no external requests.
+  Generated from tools/template.html by tools/build.py. VARIANT: TEST 3 — landing disclosure prominence: one line under the CTA instead of the block above it
+  Account creation is SIMULATED with client-side validation + localStorage. Nothing is sent anywhere.
+  Debug panel: open with ?debug=1 (event timeline, state, score object, storage, export, reset).
+-->
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --paper:#f6f2ea; --paper-2:#efe9dd; --paper-3:#e6dfd0;
+  --ink:#1c2331; --ink-2:#4a5160; --ink-3:#7a8190;
+  --accent:#ffd23f; --accent-2:#f2c000;
+  --ok:#2f7a4f; --err:#b3261e;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r-s:6px; --r-m:10px; --r-l:16px;
+  --w:640px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper-2);color:var(--ink);font:16px/1.5 var(--sans);min-height:100dvh}
+button,input{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15;margin:0}
+p{margin:0 0 12px}
+a{color:var(--ink)}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+h1[tabindex="-1"]:focus,h2[tabindex="-1"]:focus{outline:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- shell ---------- */
+.app{max-width:var(--w);margin:0 auto;min-height:100dvh;background:var(--paper);display:flex;flex-direction:column}
+@media (min-width:700px){body{padding:32px 16px}.app{min-height:auto;border-radius:var(--r-l);box-shadow:0 1px 0 rgba(28,35,49,.06),0 24px 60px -30px rgba(28,35,49,.35)}}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0}
+.brand{font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:-.01em;text-decoration:none}
+.brand b{color:var(--ink);background:var(--accent);padding:0 4px;border-radius:3px}
+.tag{font-size:12px;color:var(--ink-3)}
+main{flex:1;padding:20px 20px calc(24px + env(safe-area-inset-bottom))}
+@media (min-width:700px){main{padding:28px 40px 40px}.top{padding:22px 40px 0}}
+section[hidden]{display:none}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 22px;border:2px solid var(--ink);border-radius:var(--r-m);background:var(--ink);color:var(--paper);font-weight:600;font-size:17px;cursor:pointer;width:100%;text-decoration:none}
+.btn:hover{background:#0f1520}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--paper-3)}
+.btn-ghost:hover{background:var(--paper-2)}
+.link{background:none;border:0;padding:8px 0;color:var(--ink-2);text-decoration:underline;cursor:pointer;min-height:44px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row .btn{flex:1 1 200px}
+
+/* ---------- landing ---------- */
+.eyebrow{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:8px 0 10px;font-weight:600}
+.h1{font-size:clamp(30px,7vw,40px);margin-bottom:12px}
+.lead{font-size:18px;color:var(--ink-2);margin-bottom:16px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px;padding:0;list-style:none}
+.facts li{background:var(--paper-2);border-radius:var(--r-m);padding:12px 10px;text-align:center}
+.facts b{display:block;font-family:var(--serif);font-size:24px;line-height:1.1}
+.facts span{font-size:12px;color:var(--ink-2)}
+.disclose{border-inline-start:4px solid var(--accent);padding:11px 14px;background:var(--paper-2);border-radius:0 var(--r-m) var(--r-m) 0;margin:0 0 16px;font-size:15px}
+.disclose strong{display:block;margin-bottom:2px}
+.disclose ul{margin:4px 0 0;padding-inline-start:18px}
+.disclose li+li{margin-top:3px}
+.small{font-size:13px;color:var(--ink-3)}
+
+/* ---------- quiz ---------- */
+.qhead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.qnum{font-family:var(--serif);font-size:18px}
+.qcat{font-size:13px;color:var(--ink-3)}
+.bar{height:8px;background:var(--paper-3);border-radius:999px;overflow:hidden;margin-bottom:22px}
+.bar i{display:block;height:100%;background:var(--accent-2);width:0;transition:width .35s ease}
+.prompt{font-size:20px;font-weight:600;line-height:1.35;margin:0 0 16px;font-family:var(--serif)}
+.stim{margin:0 auto 18px;max-width:340px}
+.stim svg{width:100%;height:auto;display:block}
+.series{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.term{min-width:44px;padding:10px 8px;text-align:center;font-size:22px;font-weight:700;background:var(--paper-2);border-radius:var(--r-s);font-family:var(--serif)}
+.term-q{background:var(--accent);color:var(--ink)}
+fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opts.text{grid-template-columns:minmax(0,1fr)}
+.opt{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;min-width:0;padding:10px;border:2px solid var(--paper-3);border-radius:var(--r-m);background:var(--paper);cursor:pointer;text-align:start;font-size:17px;transition:border-color .15s,background .15s;width:100%}
+.opts.text .opt{justify-content:flex-start;padding:12px 14px}
+.opt svg{width:100%;max-width:88px;min-width:0;height:auto;aspect-ratio:1/1}
+.opt .n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--paper-2);color:var(--ink-2);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.opt:hover{border-color:var(--ink-3)}
+.opt[aria-checked="true"]{border-color:var(--ink);background:#fff7d6}
+.opt[aria-checked="true"] .n{background:var(--ink);color:var(--paper)}
+.qfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}
+@media (min-width:900px){
+  .quiz-visual{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+  .quiz-visual .stim{margin:0}
+  .quiz-visual .opts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---------- calculating ---------- */
+.calc{text-align:center;padding:40px 0}
+.steps{list-style:none;padding:0;margin:20px auto 0;max-width:320px;text-align:start}
+.steps li{padding:8px 0 8px 30px;position:relative;color:var(--ink-3)}
+.steps li::before{content:"";position:absolute;left:4px;top:13px;width:14px;height:14px;border-radius:50%;border:2px solid var(--paper-3)}
+.steps li.done{color:var(--ink)}
+.steps li.done::before{background:var(--accent);border-color:var(--accent)}
+
+/* ---------- result ---------- */
+.band{font-family:var(--serif);font-size:clamp(28px,7vw,38px);line-height:1.1;margin:4px 0 4px}
+.range{font-size:17px;color:var(--ink-2);margin-bottom:14px}
+.curve{margin:8px 0 18px}
+.curve svg{width:100%;height:auto;display:block}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 18px;padding:0;list-style:none}
+.stat li{background:var(--paper-2);border-radius:var(--r-m);padding:12px}
+.stat b{display:block;font-family:var(--serif);font-size:22px}
+.stat span{font-size:13px;color:var(--ink-2)}
+.prof{list-style:none;padding:0;margin:0 0 18px}
+.prof li{display:grid;grid-template-columns:120px 1fr 40px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--paper-3)}
+.prof .pb{height:10px;background:var(--paper-3);border-radius:999px;overflow:hidden}
+.prof .pb i{display:block;height:100%;background:var(--ink)}
+.prof .pv{font-family:var(--serif);text-align:end}
+.lock{background:var(--paper-2);border-radius:var(--r-m);padding:16px;margin:0 0 18px}
+.lock h3{font-size:19px;margin-bottom:6px}
+.lock ul{margin:0 0 12px;padding-inline-start:18px}
+.note{font-size:13px;color:var(--ink-3);margin-top:16px;border-top:1px solid var(--paper-3);padding-top:12px}
+.iqnote{font-size:14px;color:var(--ink-2)}
+.review{list-style:none;padding:0;margin:0 0 18px}
+.review li{padding:12px 0;border-bottom:1px solid var(--paper-3);display:grid;grid-template-columns:28px 1fr;gap:10px}
+.review .mark{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--paper);background:var(--ok)}
+.review .mark.no{background:var(--err)}
+.review .rq{font-weight:600;margin-bottom:2px}
+.review .rx{font-size:14px;color:var(--ink-2)}
+.more{margin:0 0 12px;border:1px solid var(--paper-3);border-radius:var(--r-m);background:var(--paper)}
+.more summary{cursor:pointer;padding:11px 14px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:44px;font-size:15px}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"+";font-size:20px;line-height:1;color:var(--ink-3)}
+.more[open] summary::after{content:"–"}
+.more .body{padding:0 14px 12px}
+.more .prof{margin:0}
+
+/* ---------- signup ---------- */
+.form{margin:16px 0}
+label.lbl{display:block;font-weight:600;margin-bottom:6px}
+.inp{width:100%;min-height:52px;padding:12px 14px;border:2px solid var(--paper-3);border-radius:var(--r-m);background:#fff;font-size:17px}
+.inp:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px var(--accent)}
+.inp[aria-invalid="true"]{border-color:var(--err)}
+.errmsg{color:var(--err);font-size:14px;margin:6px 0 0;min-height:20px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:14px;color:var(--ink-2)}
+.chk input{width:22px;height:22px;margin:0;flex:none}
+.demo{font-size:13px;color:var(--ink-2);background:var(--paper-2);border-radius:var(--r-s);padding:10px 12px;margin-top:14px}
+
+/* ---------- debug ---------- */
+#dbg{position:fixed;inset-inline:0;bottom:0;max-height:45vh;overflow:auto;background:#101418;color:#d7dde5;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;padding:10px 12px;z-index:50;border-top:3px solid var(--accent)}
+#dbg h4{margin:0 0 6px;font-size:12px;color:var(--accent)}
+#dbg .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+#dbg pre{margin:0;white-space:pre-wrap;word-break:break-all;max-height:140px;overflow:auto;background:#161c22;padding:6px;border-radius:4px}
+#dbg button{font:inherit;background:#2a323b;color:#fff;border:0;padding:6px 10px;border-radius:4px;margin:4px 6px 0 0;cursor:pointer}
+body.has-dbg{padding-bottom:46vh}
+body.has-dbg-min{padding-bottom:48px}
+#dbg-toggle{font:inherit;background:#2a323b;color:#fff;border:0;padding:4px 10px;border-radius:4px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <a class="brand" href="#" id="brand" aria-label="IQly home">IQ<b>ly</b></a>
+    <span class="tag" id="toptag">Free IQ test</span>
+  </header>
+  <main id="main">
+
+    <!-- LANDING -->
+    <section id="s-landing" aria-labelledby="h-landing">
+      <p class="eyebrow">Free IQ test · 12 questions · ~5 min</p>
+      <h1 class="h1" id="h-landing">Find out your IQ range and where you rank.</h1>
+      <p class="lead">Twelve reasoning questions, no timer. Result the moment you finish.</p>
+      <ul class="facts" aria-label="Test facts">
+        <li><b>12</b><span>questions</span></li>
+        <li><b>~5</b><span>minutes</span></li>
+        <li><b>4</b><span>areas</span></li>
+      </ul>
+      <button class="btn" id="btn-start" type="button">Start the test</button>
+      <p class="small" id="landing-small" style="margin-top:12px">Free to take. A free account (email only) at the end shows your IQ range and rank. No payment, ever. A short reasoning test, not a clinical IQ assessment. <span id="landing-resume"></span></p>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="s-quiz" hidden aria-labelledby="h-quiz">
+      <div class="qhead"><span class="qnum" id="qnum">Question 1 of 12</span><span class="qcat" id="qcat"></span></div>
+      <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+      <p class="sr" id="progress-live" aria-live="polite"></p>
+      <div id="quiz-body">
+        <h2 class="prompt" id="h-quiz"></h2>
+        <div class="stim" id="stim"></div>
+        <fieldset id="fs"><legend class="sr" id="legend">Choose one answer</legend><div class="opts" id="opts" role="radiogroup" aria-labelledby="h-quiz"></div></fieldset>
+      </div>
+      <div class="qfoot">
+        <button class="link" id="btn-back" type="button">← Back</button>
+        <button class="link" id="btn-skip" type="button">Skip this one</button>
+      </div>
+    </section>
+
+    <!-- CALCULATING -->
+    <section id="s-calc" hidden aria-labelledby="h-calc">
+      <div class="calc">
+        <h2 id="h-calc" style="font-size:26px">Scoring your answers</h2>
+        <ol class="steps" id="steps" aria-live="polite">
+          <li>Checking 12 answers</li>
+          <li>Scoring 4 reasoning areas</li>
+          <li>Placing your result</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- RESULT (preview + full share the same section; content depends on account state and CONFIG.gate) -->
+    <section id="s-result" hidden aria-labelledby="h-result">
+      <p class="eyebrow" id="res-eyebrow">Your result</p>
+      <h2 class="band" id="h-result"></h2>
+      <p class="range" id="res-range"></p>
+      <div class="curve" id="curve" role="img" aria-label=""></div>
+      <ul class="stat" id="res-stats"></ul>
+      <div class="lock" id="res-lock"></div>
+      <div id="res-actions" class="row" style="margin-bottom:16px"></div>
+      <details class="more" id="res-details-iq" hidden><summary>Why a range, not a number</summary><div class="body iqnote" id="res-iqnote"></div></details>
+      <details class="more" id="res-details-profile" hidden><summary>Your answers by area</summary>
+        <div class="body" id="res-profile-wrap">
+          <ul class="prof" id="res-profile"></ul>
+          <p class="small" id="res-profile-note" style="margin:8px 0 0">Three questions per area is too few to call anything a strength or a weakness. This is a breakdown, not a profile.</p>
+        </div>
+      </details>
+      <div id="res-review-wrap" hidden>
+        <h3 style="font-size:19px;margin:8px 0 8px">Answer review</h3>
+        <ol class="review" id="res-review"></ol>
+      </div>
+      <p class="note" id="res-note"></p>
+    </section>
+
+    <!-- SIGNUP -->
+    <section id="s-signup" hidden aria-labelledby="h-signup">
+      <p class="eyebrow" id="su-eyebrow">Free account</p>
+      <h2 id="h-signup" style="font-size:28px">Create your free account to see your result</h2>
+      <p class="lead" id="su-lead" style="font-size:16px"></p>
+      <form class="form" id="su-form" novalidate>
+        <label class="lbl" for="email">Email address</label>
+        <input class="inp" id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" aria-describedby="email-err email-help">
+        <p class="errmsg" id="email-err" role="alert" aria-live="assertive"></p>
+        <p class="small" id="email-help">Only your email. No password to remember: we send a sign-in link when you come back.</p>
+        <label class="chk"><input type="checkbox" id="mkt" name="mkt"><span>Also send me occasional IQly updates. Optional.</span></label>
+        <button class="btn" id="btn-signup" type="submit">Create my free account</button>
+        <p class="small" style="margin-top:10px">By continuing you agree to IQly's Terms and Privacy Policy. You can delete your account and data at any time.</p>
+      </form>
+      <button class="link" id="btn-su-back" type="button">← Back to my result</button>
+      <p class="demo"><b>Prototype note:</b> this page runs offline. Your email is validated in the browser and kept only in this browser's storage. No email is sent and no real account exists on a server.</p>
+    </section>
+
+  </main>
+</div>
+
+<div id="dbg" hidden>
+  <h4>IQly debug · <span id="dbg-variant"></span> <button type="button" id="dbg-toggle" style="float:right;margin:0">Collapse</button></h4>
+  <div class="g" id="dbg-body">
+    <div><b>screen</b> <span id="dbg-screen"></span> · <b>q</b> <span id="dbg-q"></span> · <b>session</b> <span id="dbg-sid"></span><pre id="dbg-state"></pre></div>
+    <div><b>score</b><pre id="dbg-score"></pre></div>
+    <div><b>events</b> (<span id="dbg-count"></span>)<pre id="dbg-events"></pre></div>
+    <div><b>localStorage</b><pre id="dbg-ls"></pre></div>
+  </div>
+  <button type="button" id="dbg-export">Export events (JSON)</button>
+  <button type="button" id="dbg-reset">Reset session</button>
+  <button type="button" id="dbg-wipe">Wipe all IQly storage</button>
+</div>
+
+<script>
+/* ======================= CONFIG (the only block that differs between variants) ======================= */
+var CONFIG = {
+  "variant": "v3-one-line-disclosure",
+  "gate": "gate",
+  "disclosure": "line",
+  "questionCount": 12
+};
+/* ====================================================================================================== */
+</script>
+<script>
+var IQLY_QUESTIONS = [
+  /* ---------- TIER 1 ---------- */
+  { id: 'M1', cat: 'pattern', tier: 1,
+    prompt: 'Which tile completes the grid?',
+    alt: 'A three by three grid of tiles containing circles, squares or triangles in varying numbers. The last tile is missing.',
+    stim: { type: 'matrix', cells: [
+      ['circle',1],['circle',2],['circle',3],
+      ['square',1],['square',2],['square',3],
+      ['triangle',1],['triangle',2],null ] },
+    options: [ ['triangle',2], ['square',3], ['triangle',3], ['circle',3], ['triangle',1], ['triangle',4] ],
+    key: 2,
+    explain: 'Each row keeps one shape, and the number of shapes grows 1, 2, 3 across the row. The missing tile needs three triangles.',
+  },
+
+  { id: 'N1', cat: 'numerical', tier: 1,
+    prompt: 'What number comes next?',
+    stim: { type: 'series', terms: [3, 6, 12, 24, '?'] },
+    options: ['36', '48', '30', '42', '96', '32'],
+    key: 1,
+    explain: 'Each number is double the one before it: 24 × 2 = 48.',
+  },
+
+  { id: 'L1', cat: 'logical', tier: 1,
+    prompt: 'Every glimp is striped. Nothing striped is heavy. Which statement must be true?',
+    stim: { type: 'text' },
+    options: ['No glimp is heavy', 'Some heavy things are glimps', 'Everything striped is a glimp', 'Every heavy thing is striped', 'Some glimps are not striped'],
+    key: 0,
+    explain: 'Every glimp is striped, and nothing striped is heavy, so no glimp can be heavy.',
+  },
+
+  { id: 'S1', cat: 'spatial', tier: 1,
+    prompt: 'Which option is the same shape as the figure shown, only rotated (not flipped)?',
+    alt: 'A figure made of four squares: three squares stacked vertically with a fourth square attached to the right of the bottom square.',
+    stim: { type: 'poly', cells: [[0,0],[0,1],[0,2],[1,2]] },
+    options: [
+      { cells: [[1,0],[1,1],[1,2],[0,2]] },           
+      { cells: [[0,0],[1,0],[2,0],[1,1]] },           
+      { cells: [[1,0],[2,0],[0,1],[1,1]] },           
+      { cells: [[0,0],[1,0],[2,0],[0,1]] },           
+      { cells: [[0,0],[1,0],[1,1],[2,1]] }            
+    ],
+    key: 3,
+    explain: 'Only option 4 is the same L-shape turned a quarter turn. Option 1 is a mirror image, which turning alone cannot produce; the others are different shapes.',
+  },
+
+  /* ---------- TIER 2 ---------- */
+  { id: 'M2', cat: 'pattern', tier: 2,
+    prompt: 'Which tile completes the grid?',
+    alt: 'A three by three grid of arrows with different fills and pointing in different directions. The last tile is missing.',
+    stim: { type: 'arrows', cells: [
+      ['outline','up'],['outline','right'],['outline','down'],
+      ['solid','up'],['solid','right'],['solid','down'],
+      ['stripe','up'],['stripe','right'],null ] },
+    options: [ ['stripe','up'], ['solid','down'], ['outline','down'], ['stripe','left'], ['stripe','down'], ['solid','left'] ],
+    key: 4,
+    explain: 'Along each row the arrow turns a quarter turn clockwise (up, right, down) and keeps its fill. Row three is striped, so the missing tile is a striped arrow pointing down.',
+  },
+
+  { id: 'N2', cat: 'numerical', tier: 2,
+    prompt: 'What number comes next?',
+    stim: { type: 'series', terms: [5, 6, 8, 11, 15, '?'] },
+    options: ['18', '19', '21', '20', '24', '22'],
+    key: 3,
+    explain: 'The gaps grow by one each time: +1, +2, +3, +4. The next gap is +5, so the answer is 20.',
+  },
+
+  { id: 'L2', cat: 'logical', tier: 2,
+    prompt: 'Five runners finished a race. Maya finished before Dan. Dan finished before Lee. Kim finished after Lee. Sam finished before Maya. Who finished third?',
+    stim: { type: 'text' },
+    options: ['Maya', 'Dan', 'Lee', 'Sam', 'Kim'],
+    key: 1,
+    explain: 'Putting the clues in order gives Sam, Maya, Dan, Lee, Kim. Dan finished third.',
+  },
+
+  { id: 'S2', cat: 'spatial', tier: 2,
+    prompt: 'A square sheet is folded once along the dotted line (top half down over the bottom half). A hole is then punched through the folded sheet. What does the sheet look like unfolded?',
+    alt: 'A square with a horizontal dotted fold line through the middle. The folded packet is shown with one punched hole.',
+    stim: { type: 'fold', folds: ['h'], punch: [0.75, 0.75] },
+    options: [
+      { holes: [[0.75,0.75],[0.75,0.25]] },   
+      { holes: [[0.75,0.75],[0.25,0.75]] },   
+      { holes: [[0.75,0.75]] },               
+      { holes: [[0.75,0.75],[0.25,0.25]] },   
+      { holes: [[0.75,0.75],[0.75,0.25],[0.25,0.75],[0.25,0.25]] } 
+    ],
+    key: 0,
+    explain: 'Folding the top half down means the punch goes through both halves at the same distance from the fold, so the two holes mirror each other across the middle line.',
+  },
+
+  /* ---------- TIER 3 ---------- */
+  { id: 'M3', cat: 'pattern', tier: 3,
+    prompt: 'Which tile completes the grid?',
+    alt: 'A three by three grid of tiles; each tile has dots in some of its four corners. The last tile is missing.',
+    stim: { type: 'dots', cells: [
+      ['TL','TR'], ['TR','BL'], ['TL','BL'],
+      ['BR'], ['TL'], ['TL','BR'],
+      ['TL','TR','BR'], ['TR','BL'], null ] },
+    options: [ ['TL','TR','BL','BR'], ['TR','BL','BR'], ['TL','BR'], ['TL','BL','BR'], ['TL','TR','BL'], ['BL','BR'] ],
+    key: 3,
+    explain: 'In each row, the third tile keeps the corners that appear in exactly one of the first two tiles; a corner both tiles share drops out. For row three that leaves top-left, bottom-left and bottom-right.',
+  },
+
+  { id: 'N3', cat: 'numerical', tier: 3,
+    prompt: 'What number comes next?',
+    stim: { type: 'series', terms: [2, 9, 4, 11, 8, 13, '?'] },
+    options: ['15', '17', '12', '18', '10', '16'],
+    key: 5,
+    explain: 'Two sequences are interleaved: 2, 4, 8 (doubling) and 9, 11, 13 (adding 2). The next number continues the doubling sequence: 16.',
+  },
+
+  { id: 'L3', cat: 'logical', tier: 3,
+    prompt: 'In a village, everyone who owns a boat also owns a net. Nobody who owns a net owns a car. Tom lives in the village and owns a car. Which statement must be true?',
+    stim: { type: 'text' },
+    options: ['Tom owns a boat', 'Tom owns a net', 'Tom does not own a boat', 'Tom owns a net but no boat', 'Tom owns a boat but no net'],
+    key: 2,
+    explain: 'Tom owns a car, so he cannot own a net (net owners never own cars). Anyone with a boat owns a net, so Tom cannot own a boat.',
+  },
+
+  { id: 'S3', cat: 'spatial', tier: 3,
+    prompt: 'A square sheet is folded twice: first the top half down, then the left half over the right half. A hole is punched through the folded sheet. What does the sheet look like unfolded?',
+    alt: 'A square with two dotted fold lines. The folded packet is shown with one punched hole.',
+    stim: { type: 'fold', folds: ['h','v'], punch: [0.85, 0.85] },
+    options: [
+      { holes: [[0.85,0.85],[0.15,0.85]] },                              
+      { holes: [[0.85,0.85],[0.85,0.15]] },                              
+      { holes: [[0.6,0.6],[0.4,0.6],[0.6,0.4],[0.4,0.4]] },              
+      { holes: [[0.85,0.85]] },                                          
+      { holes: [[0.85,0.85],[0.15,0.85],[0.85,0.15],[0.15,0.15]] }       
+    ],
+    key: 4,
+    explain: 'Two folds make four layers. Each fold mirrors the hole across its fold line, so one punch leaves four holes, one near each corner.',
+  }
+];
+</script>
+<script>
+/* IQly SVG renderers — pure functions returning SVG markup strings. No DOM, no network.
+   Stroke colours use currentColor so they follow the theme. */
+var IQLY_RENDER = (function () {
+  'use strict';
+  var NS = 'xmlns="http://www.w3.org/2000/svg"';
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  /* --- primitives --- */
+  function shape(kind, cx, cy, r, fill) {
+    fill = fill || 'currentColor';
+    if (kind === 'circle') return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + fill + '"/>';
+    if (kind === 'square') return '<rect x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + (2 * r) + '" height="' + (2 * r) + '" fill="' + fill + '"/>';
+    if (kind === 'triangle') return '<polygon points="' + cx + ',' + (cy - r) + ' ' + (cx + r) + ',' + (cy + r) + ' ' + (cx - r) + ',' + (cy + r) + '" fill="' + fill + '"/>';
+    return '';
+  }
+
+  /* a tile of n shapes in a row, in a 100×100 box */
+  function countTile(kind, n) {
+    var out = '';
+    var r = n <= 3 ? 11 : 9, gap = n <= 3 ? 30 : 23;
+    var start = 50 - ((n - 1) * gap) / 2;
+    for (var i = 0; i < n; i++) out += shape(kind, start + i * gap, 50, r);
+    return out;
+  }
+
+  function arrowTile(fill, dir) {
+    var rot = { up: 0, right: 90, down: 180, left: 270 }[dir] || 0;
+    var pattern = '';
+    var f = 'currentColor';
+    if (fill === 'outline') f = 'none';
+    if (fill === 'stripe') f = 'url(#iqly-stripe)';
+    return '<g transform="rotate(' + rot + ' 50 50)">' +
+      '<path d="M50 18 L76 48 L60 48 L60 82 L40 82 L40 48 L24 48 Z" fill="' + f + '" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></g>';
+  }
+
+  function dotsTile(corners) {
+    var pos = { TL: [26, 26], TR: [74, 26], BL: [26, 74], BR: [74, 74] };
+    var out = '';
+    for (var i = 0; i < corners.length; i++) {
+      var p = pos[corners[i]];
+      out += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="11" fill="currentColor"/>';
+    }
+    return out;
+  }
+
+  function tileByType(type, spec) {
+    if (!spec) return '';
+    if (type === 'matrix') return countTile(spec[0], spec[1]);
+    if (type === 'arrows') return arrowTile(spec[0], spec[1]);
+    if (type === 'dots') return dotsTile(spec);
+    return '';
+  }
+
+  var STRIPE_DEF = '<defs><pattern id="iqly-stripe" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="8" fill="currentColor"/></pattern></defs>';
+
+  /* --- 3×3 matrix stimulus --- */
+  function matrixStim(q) {
+    var cells = q.stim.cells, out = '<svg ' + NS + ' viewBox="0 0 330 330" role="img" aria-label="' + esc(q.alt || '') + '">' + STRIPE_DEF;
+    for (var i = 0; i < 9; i++) {
+      var x = (i % 3) * 110, y = Math.floor(i / 3) * 110;
+      out += '<rect x="' + (x + 2) + '" y="' + (y + 2) + '" width="106" height="106" rx="10" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/>';
+      if (cells[i] === null) {
+        out += '<text x="' + (x + 55) + '" y="' + (y + 66) + '" text-anchor="middle" font-size="44" font-weight="700" fill="currentColor" fill-opacity="0.45">?</text>';
+      } else {
+        out += '<g transform="translate(' + (x + 5) + ' ' + (y + 5) + ')">' + tileByType(q.stim.type, cells[i]) + '</g>';
+      }
+    }
+    return out + '</svg>';
+  }
+
+  function tileOption(q, opt) {
+    return '<svg ' + NS + ' viewBox="0 0 100 100" aria-hidden="true">' + STRIPE_DEF + tileByType(q.stim.type, opt) + '</svg>';
+  }
+
+  /* --- number series --- */
+  function seriesStim(q) {
+    var t = q.stim.terms, out = '<div class="series" role="img" aria-label="Sequence: ' + esc(t.join(', ')) + '">';
+    for (var i = 0; i < t.length; i++) out += '<span class="term' + (t[i] === '?' ? ' term-q' : '') + '">' + esc(t[i]) + '</span>';
+    return out + '</div>';
+  }
+
+  /* --- polyomino --- */
+  function polySvg(cells, label) {
+    var out = '<svg ' + NS + ' viewBox="0 0 100 100"' + (label ? ' role="img" aria-label="' + esc(label) + '"' : ' aria-hidden="true"') + '>';
+    var maxX = 0, maxY = 0;
+    cells.forEach(function (c) { maxX = Math.max(maxX, c[0]); maxY = Math.max(maxY, c[1]); });
+    var u = 24, w = (maxX + 1) * u, h = (maxY + 1) * u, ox = (100 - w) / 2, oy = (100 - h) / 2;
+    cells.forEach(function (c) {
+      out += '<rect x="' + (ox + c[0] * u + 1) + '" y="' + (oy + c[1] * u + 1) + '" width="' + (u - 2) + '" height="' + (u - 2) + '" rx="3" fill="currentColor"/>';
+    });
+    return out + '</svg>';
+  }
+
+  /* --- paper folding --- */
+  function foldStim(q) {
+    var folds = q.stim.folds, p = q.stim.punch;
+    var out = '<svg ' + NS + ' viewBox="0 0 250 110" role="img" aria-label="' + esc(q.alt || '') + '">';
+    /* left: sheet with fold lines and arrows */
+    out += '<rect x="5" y="5" width="100" height="100" fill="none" stroke="currentColor" stroke-width="2"/>';
+    if (folds.indexOf('h') >= 0) out += '<line x1="5" y1="55" x2="105" y2="55" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/>' +
+      '<path d="M55 14 L55 42 M48 35 L55 42 L62 35" fill="none" stroke="currentColor" stroke-width="2.5"/>';
+    if (folds.indexOf('v') >= 0) out += '<line x1="55" y1="5" x2="55" y2="105" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/>' +
+      '<path d="M14 80 L42 80 M35 73 L42 80 L35 87" fill="none" stroke="currentColor" stroke-width="2.5"/>';
+    /* arrow between */
+    out += '<path d="M118 55 L138 55 M132 49 L138 55 L132 61" fill="none" stroke="currentColor" stroke-width="2.5" stroke-opacity="0.6"/>';
+    /* right: folded packet */
+    var px = 145, py = 5, pw = 100, ph = 100;
+    var x0 = 0, y0 = 0;
+    if (folds.indexOf('h') >= 0) { ph = 50; py = 55; y0 = 0.5; }
+    if (folds.indexOf('v') >= 0) { pw = 50; px = 195; x0 = 0.5; }
+    out += '<rect x="' + px + '" y="' + py + '" width="' + pw + '" height="' + ph + '" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="2"/>';
+    /* ghost of full sheet */
+    out += '<rect x="145" y="5" width="100" height="100" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.4"/>';
+    /* punch: map full-sheet coords to packet */
+    var hx = 145 + p[0] * 100, hy = 5 + p[1] * 100;
+    out += '<circle cx="' + hx + '" cy="' + hy + '" r="6" fill="currentColor"/>';
+    return out + '</svg>';
+  }
+
+  function foldOption(opt) {
+    var out = '<svg ' + NS + ' viewBox="0 0 100 100" aria-hidden="true"><rect x="5" y="5" width="90" height="90" fill="none" stroke="currentColor" stroke-width="2"/>';
+    opt.holes.forEach(function (h) { out += '<circle cx="' + (5 + h[0] * 90) + '" cy="' + (5 + h[1] * 90) + '" r="5.5" fill="currentColor"/>'; });
+    return out + '</svg>';
+  }
+
+  /* --- public API --- */
+  function stimulus(q) {
+    var t = q.stim.type;
+    if (t === 'matrix' || t === 'arrows' || t === 'dots') return matrixStim(q);
+    if (t === 'series') return seriesStim(q);
+    if (t === 'poly') return polySvg(q.stim.cells, q.alt);
+    if (t === 'fold') return foldStim(q);
+    return '';
+  }
+
+  /* returns {html, isText} */
+  function option(q, opt) {
+    var t = q.stim.type;
+    if (t === 'matrix' || t === 'arrows' || t === 'dots') return { html: tileOption(q, opt), isText: false };
+    if (t === 'poly') return { html: polySvg(opt.cells), isText: false };
+    if (t === 'fold') return { html: foldOption(opt), isText: false };
+    return { html: esc(opt), isText: true };
+  }
+
+  /* accessible description of a visual option (for aria-label) */
+  function optionLabel(q, opt, idx) {
+    var t = q.stim.type, n = 'Option ' + (idx + 1);
+    if (t === 'matrix') return n + ': ' + opt[1] + ' ' + opt[0] + (opt[1] > 1 ? 's' : '');
+    if (t === 'arrows') return n + ': ' + opt[0] + ' arrow pointing ' + opt[1];
+    if (t === 'dots') return n + ': dots at ' + opt.join(', ').replace(/TL/g, 'top-left').replace(/TR/g, 'top-right').replace(/BL/g, 'bottom-left').replace(/BR/g, 'bottom-right');
+    if (t === 'poly') return n + ': a four-square figure';
+    if (t === 'fold') return n + ': ' + opt.holes.length + ' hole' + (opt.holes.length > 1 ? 's' : '');
+    return n + ': ' + opt;
+  }
+
+  return { stimulus: stimulus, option: option, optionLabel: optionLabel };
+})();
+</script>
+<script>
+(function () {
+'use strict';
+
+/* ---------- storage keys (namespaced per variant so standalone files never share state) ---------- */
+var NS = 'iqly.' + CONFIG.variant + '.';
+var K = { state: NS + 'state', events: NS + 'events', account: NS + 'account' };
+
+function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable: session continues in memory */ } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- question set ---------- */
+/* CONFIG.items (Test 2) selects a subset of the bank sampled across difficulty tiers and areas; otherwise the whole bank is used. */
+var QUESTIONS = CONFIG.items ? CONFIG.items.map(function (i) { return IQLY_QUESTIONS[i]; }) : IQLY_QUESTIONS.slice(0, CONFIG.questionCount);
+var N = QUESTIONS.length;
+window.IQLY_ACTIVE = QUESTIONS;   /* exposed for the offline test harness */
+var CATS = { pattern: 'Pattern recognition', numerical: 'Numerical reasoning', logical: 'Logical reasoning', spatial: 'Spatial reasoning' };
+var CAT_ORDER = ['pattern', 'numerical', 'logical', 'spatial'];
+
+/* ---------- state ---------- */
+var state = lsGet(K.state, null);
+var fresh = !state;
+if (!state) {
+  state = { sid: uid(), variant: CONFIG.variant, screen: 'LANDING', q: 0, answers: [], startedAt: null, completedAt: null, created: Date.now() };
+}
+var account = lsGet(K.account, null);
+var events = lsGet(K.events, []);
+var onceFired = {};
+events.forEach(function (e) { if (e.once) onceFired[e.name] = true; });
+
+function save() { lsSet(K.state, state); }
+
+/* ---------- analytics (local event log; production would POST the same payloads) ---------- */
+var ONCE = { landing_view:1, landing_disclosure_view:1, quiz_start:1, quiz_25:1, quiz_50:1, quiz_75:1, quiz_complete:1, scoring_view:1, scoring_complete:1, result_teaser_view:1, signup_view:1, signup_start:1, signup_complete:1, result_view:1, resume_restored:1 };
+function track(name, props) {
+  if (ONCE[name]) { if (onceFired[name]) return; onceFired[name] = true; }
+  var e = { name: name, t: Date.now(), sid: state.sid, variant: CONFIG.variant, screen: state.screen, props: props || {}, once: !!ONCE[name] };
+  events.push(e);
+  if (events.length > 500) events = events.slice(-500);
+  lsSet(K.events, events);
+  dbgRender();
+}
+
+/* ---------- scoring (deterministic, transparent) ---------- */
+function score() {
+  var raw = 0, byCat = {}, answered = 0;
+  CAT_ORDER.forEach(function (c) { byCat[c] = { correct: 0, total: 0 }; });
+  QUESTIONS.forEach(function (q, i) {
+    byCat[q.cat].total++;
+    var a = state.answers[i];
+    if (a !== undefined && a !== null && a !== 'skip') answered++;
+    if (a === q.key) { raw++; byCat[q.cat].correct++; }
+  });
+  var pct = raw / N;
+  /* Illustrative band mapping for the prototype. NOT a normed score. Bands are deliberately broad. */
+  var band;
+  if (pct >= 0.9)      band = { label: 'Well above average range', iq: 'around 115 or higher', pctl: 'top ~5–15%' };
+  else if (pct >= 0.7) band = { label: 'Above average range',      iq: 'around 105 to 120',    pctl: 'top ~15–35%' };
+  else if (pct >= 0.4) band = { label: 'Average range',            iq: 'around 90 to 110',     pctl: 'middle ~50%' };
+  else                 band = { label: 'Below average range',      iq: 'around 90 or lower',   pctl: 'lower ~25%' };
+  var strongest = CAT_ORDER.slice().sort(function (a, b) { return (byCat[b].correct / byCat[b].total) - (byCat[a].correct / byCat[a].total); })[0];
+  return { raw: raw, total: N, pct: pct, answered: answered, byCat: byCat, band: band, strongest: strongest };
+}
+
+/* ---------- navigation ---------- */
+var SCREENS = { LANDING: 's-landing', QUIZ: 's-quiz', CALCULATING: 's-calc', RESULT: 's-result', SIGNUP: 's-signup' };
+function go(screen) {
+  state.screen = screen; save();
+  Object.keys(SCREENS).forEach(function (s) { $(SCREENS[s]).hidden = (s !== screen); });
+  window.scrollTo(0, 0);
+  render();
+  var h = $(SCREENS[screen]).querySelector('h1,h2');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+  dbgRender();
+}
+
+function render() {
+  if (state.screen === 'LANDING') renderLanding();
+  else if (state.screen === 'QUIZ') renderQuestion();
+  else if (state.screen === 'CALCULATING') runCalc();
+  else if (state.screen === 'RESULT') renderResult();
+  else if (state.screen === 'SIGNUP') renderSignup();
+}
+
+/* ---------- landing ---------- */
+function renderLanding() {
+  track('landing_view', { gate: CONFIG.gate, disclosure: CONFIG.disclosure, questions: N });
+  track('landing_disclosure_view', { prominence: CONFIG.disclosure });
+  var r = $('landing-resume');
+  if (state.startedAt && !state.completedAt && state.answers.length) {
+    r.innerHTML = ' <button class="link" id="btn-resume" type="button" style="min-height:auto;padding:0">Continue where you left off (question ' + (state.q + 1) + ')</button>';
+    $('btn-resume').onclick = function () { track('resume_restored', { q: state.q }); go('QUIZ'); };
+  } else r.textContent = '';
+}
+
+/* ---------- quiz ---------- */
+function renderQuestion() {
+  var i = state.q, q = QUESTIONS[i];
+  $('qnum').textContent = 'Question ' + (i + 1) + ' of ' + N;
+  $('qcat').textContent = CATS[q.cat];
+  $('bar').style.width = Math.round((i / N) * 100) + '%';
+  $('progress-live').textContent = 'Question ' + (i + 1) + ' of ' + N + ', ' + CATS[q.cat];
+  $('h-quiz').textContent = q.prompt;
+  $('stim').innerHTML = q.stim.type === 'text' ? '' : IQLY_RENDER.stimulus(q);
+  $('stim').hidden = q.stim.type === 'text';
+  var isText = q.stim.type === 'text' || q.stim.type === 'series';
+  $('quiz-body').className = isText ? '' : 'quiz-visual';
+  var opts = $('opts'); opts.className = 'opts' + (isText ? ' text' : ''); opts.innerHTML = '';
+  var sel = state.answers[i];
+  q.options.forEach(function (o, oi) {
+    var r = IQLY_RENDER.option(q, o);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'opt'; b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', sel === oi ? 'true' : 'false');
+    b.setAttribute('aria-label', r.isText ? 'Option ' + (oi + 1) + ': ' + o : IQLY_RENDER.optionLabel(q, o, oi));
+    b.dataset.i = oi;
+    b.innerHTML = '<span class="n" aria-hidden="true">' + (oi + 1) + '</span>' + (r.isText ? '<span>' + r.html + '</span>' : r.html);
+    b.addEventListener('click', function () { choose(oi); });
+    opts.appendChild(b);
+  });
+  $('btn-back').disabled = (i === 0); $('btn-back').style.visibility = i === 0 ? 'hidden' : 'visible';
+  track('question_view', { q: i + 1, id: q.id, cat: q.cat });
+  var m = Math.floor(N * 0.25), h = Math.floor(N * 0.5), t = Math.floor(N * 0.75);
+  if (i === m) track('quiz_25'); if (i === h) track('quiz_50'); if (i === t) track('quiz_75');
+}
+
+var advancing = false;
+function choose(oi) {
+  if (advancing) return;
+  var i = state.q, prev = state.answers[i];
+  state.answers[i] = oi; save();
+  Array.prototype.forEach.call($('opts').children, function (b) { b.setAttribute('aria-checked', String(Number(b.dataset.i) === oi)); });
+  track(prev === undefined || prev === null ? 'answer_selected' : 'answer_changed', { q: i + 1, id: QUESTIONS[i].id, option: oi + 1 });
+  track('question_answered', { q: i + 1, id: QUESTIONS[i].id });
+  advancing = true;
+  setTimeout(function () { advancing = false; next(); }, reduceMotion ? 0 : 320);
+}
+function next() {
+  if (state.q + 1 < N) { state.q++; save(); renderQuestion(); $('h-quiz').setAttribute('tabindex', '-1'); $('h-quiz').focus({ preventScroll: true }); window.scrollTo(0, 0); }
+  else finishQuiz();
+}
+function finishQuiz() {
+  state.completedAt = state.completedAt || Date.now(); save();
+  var s = score();
+  track('quiz_complete', { raw: s.raw, answered: s.answered, ms: state.completedAt - state.startedAt });
+  go('CALCULATING');
+}
+$('btn-back').addEventListener('click', function () {
+  if (state.q === 0) return;
+  track('back_click', { from: state.q + 1 });
+  state.q--; save(); renderQuestion();
+});
+$('btn-skip').addEventListener('click', function () {
+  var i = state.q;
+  state.answers[i] = 'skip'; save();
+  track('question_skipped', { q: i + 1, id: QUESTIONS[i].id });
+  next();
+});
+$('btn-start').addEventListener('click', function () {
+  track('landing_cta_click');
+  if (!state.startedAt) { state.startedAt = Date.now(); state.q = 0; state.answers = []; }
+  track('quiz_start', { questions: N });
+  if (CONFIG.gate === 'pre-quiz' && !account) { go('SIGNUP'); return; }
+  go('QUIZ');
+});
+
+/* ---------- calculating: real steps, short, honest ---------- */
+function runCalc() {
+  track('scoring_view');
+  var lis = $('steps').children;
+  Array.prototype.forEach.call(lis, function (li) { li.classList.remove('done'); });
+  var delay = reduceMotion ? 0 : 380, k = 0;
+  function step() {
+    if (k < lis.length) { lis[k].classList.add('done'); k++; setTimeout(step, delay); }
+    else { track('scoring_complete'); setTimeout(function () { go('RESULT'); }, reduceMotion ? 0 : 250); }
+  }
+  setTimeout(step, delay);
+}
+
+/* ---------- result ---------- */
+function curveSvg(pct) {
+  /* bell-shaped reference curve with the user's band highlighted. Illustrative, not a normed distribution. */
+  var w = 320, h = 110, pts = [];
+  for (var x = 0; x <= w; x += 4) { var z = (x - w / 2) / (w / 6); pts.push(x + ',' + (h - 12 - Math.exp(-z * z / 2) * (h - 30))); }
+  var bands = [[0, .3], [.3, .62], [.62, .85], [.85, 1]];
+  var idx = pct >= .9 ? 3 : pct >= .7 ? 2 : pct >= .4 ? 1 : 0;
+  var b = bands[idx], x0 = b[0] * w, x1 = b[1] * w;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '">' +
+    '<rect x="' + x0 + '" y="8" width="' + (x1 - x0) + '" height="' + (h - 18) + '" fill="#ffd23f" fill-opacity=".55" rx="6"/>' +
+    '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#1c2331" stroke-width="2.5"/>' +
+    '<line x1="0" y1="' + (h - 12) + '" x2="' + w + '" y2="' + (h - 12) + '" stroke="#1c2331" stroke-opacity=".3"/>' +
+    '<text x="0" y="' + h + '" font-size="11" fill="#7a8190">lower</text><text x="' + (w / 2) + '" y="' + h + '" font-size="11" text-anchor="middle" fill="#7a8190">average</text><text x="' + w + '" y="' + h + '" font-size="11" text-anchor="end" fill="#7a8190">higher</text></svg>';
+}
+
+var IQ_NOTE = 'On the familiar IQ scale (average 100) a result in this range would typically sit <b>%IQ%</b>. A ' + N + '-question test cannot pin down a number: the uncertainty is about ±15 points, so IQly shows a range, not a score.';
+var DISCLAIMER = 'IQly is a short online reasoning test, not a clinical or psychometrically normed IQ assessment. The range and rank are estimates from a prototype scoring model; in production the rank is computed from IQly test-takers to date, shown with its sample size, and updated as more people take the test. Do not use this result for medical, educational or employment decisions.';
+var RANK_LABEL = 'estimated rank among IQly test-takers · provisional';
+
+function renderProfile(s) {
+  var prof = $('res-profile'); prof.innerHTML = '';
+  CAT_ORDER.forEach(function (c) {
+    var v = s.byCat[c];
+    prof.innerHTML += '<li><span>' + CATS[c].split(' ')[0] + '</span><span class="pb" aria-hidden="true"><i style="width:' + Math.round(v.correct / v.total * 100) + '%"></i></span><span class="pv">' + v.correct + '/' + v.total + '</span></li>';
+  });
+  var per = s.byCat[CAT_ORDER[0]].total, words = { 2: 'Two', 3: 'Three', 4: 'Four' };
+  $('res-profile-note').textContent = (words[per] || per) + ' questions per area is too few to call anything a strength or a weakness. This is a breakdown, not a profile.';
+}
+
+function renderReview() {
+  var ol = $('res-review'); ol.innerHTML = '';
+  QUESTIONS.forEach(function (q, i) {
+    var a = state.answers[i], right = a === q.key;
+    var chosen = a === 'skip' || a === undefined || a === null ? 'skipped' : 'you chose option ' + (a + 1);
+    ol.innerHTML += '<li><span class="mark' + (right ? '' : ' no') + '" aria-label="' + (right ? 'Correct' : 'Incorrect') + '">' + (right ? '✓' : '✗') + '</span><div><div class="rq">Q' + (i + 1) + ' · ' + CATS[q.cat] + (right ? ' · correct' : ' · correct answer: option ' + (q.key + 1) + ' (' + chosen + ')') + '</div><div class="rx">' + esc(q.explain || '') + '</div></div></li>';
+  });
+}
+
+function setDetails(id, show, html) {
+  var d = $(id); d.hidden = !show; d.open = false;
+  if (html !== undefined) d.querySelector('.body').innerHTML = html;
+}
+function noteWithRetake() {
+  $('res-note').innerHTML = esc(DISCLAIMER) + ' <button class="link" id="btn-retake2" type="button" style="min-height:auto;padding:0">Retake the test</button>';
+  $('btn-retake2').onclick = restart;
+}
+
+function renderResult() {
+  var s = score(), full = !!account || CONFIG.gate === 'pre-quiz';
+  var gated = CONFIG.gate === 'gate' && !full;   /* control: how many correct is free; range, rank and review need the free account */
+  $('res-review-wrap').hidden = !full;
+
+  if (s.answered < Math.ceil(N / 2)) {
+    /* Too few answers to estimate anything honestly: no range, no rank. */
+    $('res-eyebrow').textContent = 'Your result';
+    $('h-result').textContent = 'Not enough answers to estimate a range';
+    $('res-range').textContent = 'You answered ' + s.answered + ' of ' + N + ' questions (' + s.raw + ' correct). A range and rank need at least ' + Math.ceil(N / 2) + ' answers.';
+    $('curve').innerHTML = ''; $('res-stats').innerHTML = ''; setDetails('res-details-iq', false); setDetails('res-details-profile', false); $('res-review-wrap').hidden = true;
+    $('res-lock').innerHTML = '<h3>Try again with all questions</h3><p class="small" style="margin:0">Skipped questions count as unanswered. Take your time — there is no timer.</p>';
+    $('res-actions').innerHTML = '<button class="btn" id="btn-retake" type="button">Retake the test</button>';
+    $('btn-retake').onclick = restart;
+    $('res-note').textContent = DISCLAIMER;
+    track('result_insufficient', { answered: s.answered });
+    return;
+  }
+
+  renderProfile(s);
+
+  if (gated) {
+    /* CONTROL gate screen: a true partial result (how many correct), then the account card. No blurred values, no fake locked numbers. */
+    $('res-eyebrow').textContent = 'Your result is ready';
+    $('h-result').textContent = 'You answered ' + s.raw + ' of ' + N + ' correctly.';
+    $('res-range').textContent = 'Your IQ range and your rank among IQly test-takers are ready to view.';
+    $('curve').innerHTML = ''; $('curve').setAttribute('aria-label', ''); $('res-stats').innerHTML = '';
+    $('res-lock').innerHTML = '<h3>Create your free account to see your result</h3><ul><li><b>Your IQ range</b> on the familiar scale</li><li><b>Your rank</b> among IQly test-takers, updated as more people take the test</li><li><b>The full answer review:</b> which questions you missed, and why</li><li>Saved to your account, with history if you retake</li></ul><p class="small" style="margin:0">Free. Email only, no password. No payment, ever.</p>';
+    $('res-actions').innerHTML = '<button class="btn" id="btn-unlock" type="button">Create free account and see my result</button>';
+    $('btn-unlock').onclick = function () { go('SIGNUP'); };
+    setDetails('res-details-iq', false);
+    setDetails('res-details-profile', true);
+    noteWithRetake();
+    track('result_teaser_view', { raw: s.raw, mode: 'gate' });
+    return;
+  }
+
+  $('res-eyebrow').textContent = full ? 'Your result · saved to ' + account.email : 'Your result';
+  $('h-result').textContent = s.band.label;
+  $('res-range').innerHTML = 'You answered <b>' + s.raw + ' of ' + N + '</b> questions correctly.';
+  $('curve').innerHTML = curveSvg(s.pct); $('curve').setAttribute('aria-label', 'Reference curve with your range, ' + s.band.label + ', highlighted');
+  $('res-stats').innerHTML = '<li><b>' + s.raw + ' / ' + N + '</b><span>correct answers</span></li><li><b>' + esc(s.band.pctl) + '</b><span>' + RANK_LABEL + '</span></li>';
+  setDetails('res-details-iq', true, IQ_NOTE.replace('%IQ%', esc(s.band.iq)));
+  setDetails('res-details-profile', true);
+
+  if (full) {
+    renderReview();
+    $('res-lock').innerHTML = '<h3>What this means</h3><p>A ' + N + '-question test gives a broad estimate, not a precise number: two people with the same true ability can land in neighbouring ranges, and the same person can move a range between days. Retaking after a break is a fair check, and your history is kept here.</p><p class="small" style="margin:0">Saved to your account. Your rank updates as more people take the test. Retake any time.</p>';
+    $('res-actions').innerHTML = '<button class="btn btn-ghost" id="btn-copy" type="button">Copy my result</button><button class="btn btn-ghost" id="btn-retake" type="button">Retake the test</button>';
+    $('btn-copy').onclick = function () {
+      var txt = 'IQly result: ' + s.band.label + ' — ' + s.raw + '/' + N + ' correct, estimated rank ' + s.band.pctl + ' of IQly test-takers (short online reasoning test, not a clinical assessment).';
+      try { navigator.clipboard.writeText(txt); $('btn-copy').textContent = 'Copied'; } catch (e) { prompt('Copy your result', txt); }
+      track('result_copy');
+    };
+    $('btn-retake').onclick = restart;
+    $('res-note').textContent = DISCLAIMER;
+    track('result_view', { raw: s.raw, band: s.band.label });
+  } else {
+    /* TEST 1 arm (score-first): range and rank shown free; the account adds the review, history and the updating rank. */
+    $('res-lock').innerHTML = '<h3>Save this result and unlock the answer review</h3><ul><li><b>The full answer review:</b> which questions you missed, and why</li><li><b>Your rank, updated</b> as more people take the test</li><li>Saved with history if you retake. Sign in by email link, no password.</li></ul><p class="small" style="margin:0">Free account, email only. No payment, ever.</p>';
+    $('res-actions').innerHTML = '<button class="btn" id="btn-unlock" type="button">Create free account and unlock</button>';
+    $('btn-unlock').onclick = function () { go('SIGNUP'); };
+    noteWithRetake();
+    track('result_teaser_view', { raw: s.raw, band: s.band.label, mode: 'score-first' });
+  }
+}
+['res-details-iq', 'res-details-profile'].forEach(function (id) {
+  $(id).addEventListener('toggle', function () { if ($(id).open) track('result_details_open', { which: id === 'res-details-iq' ? 'why_a_range' : 'by_area' }); });
+});
+
+/* ---------- signup (simulated account) ---------- */
+var submitting = false;
+function renderSignup() {
+  var pre = CONFIG.gate === 'pre-quiz';
+  $('h-signup').textContent = pre ? 'Create your free account to start the test' : (CONFIG.gate === 'gate' ? 'Create your free account to see your result' : 'Save your result and unlock the answer review');
+  $('su-lead').textContent = pre ? 'Your range, rank and answer review are saved to your account the moment you finish.' : (CONFIG.gate === 'gate' ? 'Your answers are already scored. The account shows your IQ range and rank, and keeps the full answer review.' : 'Your range and rank stay free. The account keeps them and adds the full answer review with explanations.');
+  $('btn-su-back').textContent = pre ? '← Back' : '← Back to my result';
+  $('email-err').textContent = ''; $('email').removeAttribute('aria-invalid');
+  track('signup_view', { gate: CONFIG.gate });
+  setTimeout(function () { $('email').focus(); }, reduceMotion ? 0 : 50);
+}
+$('email').addEventListener('input', function () { track('signup_start'); if ($('email').getAttribute('aria-invalid')) { $('email').removeAttribute('aria-invalid'); $('email-err').textContent = ''; } });
+function validEmail(v) {
+  /* pragmatic syntax check: local@domain.tld, no spaces, tld ≥2 letters. Ownership cannot be verified offline. */
+  return /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(v) && v.length <= 254;
+}
+$('su-form').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  if (submitting) return;
+  var v = $('email').value.trim();
+  track('signup_submit');
+  if (!validEmail(v)) {
+    $('email').setAttribute('aria-invalid', 'true');
+    $('email-err').textContent = v ? 'That does not look like an email address. Check for a typo, for example name@example.com.' : 'Enter your email address to create the account.';
+    track('signup_error', { reason: v ? 'invalid_format' : 'empty' });
+    $('email').focus();
+    return;
+  }
+  submitting = true; $('btn-signup').disabled = true; $('btn-signup').textContent = 'Creating your account…';
+  setTimeout(function () {
+    account = { email: v, marketing: $('mkt').checked, createdAt: Date.now(), sid: state.sid, simulated: true };
+    lsSet(K.account, account);
+    track('signup_complete', { marketing: account.marketing, email_domain_hash: hash(v.split('@')[1] || '') });
+    submitting = false; $('btn-signup').disabled = false; $('btn-signup').textContent = 'Create my free account';
+    if (CONFIG.gate === 'pre-quiz') go('QUIZ'); else go('RESULT');
+  }, reduceMotion ? 0 : 500);
+});
+$('btn-su-back').addEventListener('click', function () { go(CONFIG.gate === 'pre-quiz' ? 'LANDING' : 'RESULT'); });
+function hash(str) { var h = 0; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(16); }
+
+/* ---------- restart / resume ---------- */
+function restart() {
+  track('quiz_restart');
+  state.q = 0; state.answers = []; state.startedAt = Date.now(); state.completedAt = null; save();
+  go('QUIZ');
+}
+$('brand').addEventListener('click', function (e) { e.preventDefault(); go('LANDING'); });
+
+/* ---------- debug panel ---------- */
+var DEBUG = /[?&]debug=1/.test(location.search);
+function dbgRender() {
+  if (!DEBUG) return;
+  $('dbg-variant').textContent = CONFIG.variant + ' · gate=' + CONFIG.gate + ' · disclosure=' + CONFIG.disclosure + ' · n=' + N;
+  $('dbg-screen').textContent = state.screen; $('dbg-q').textContent = (state.q + 1) + '/' + N; $('dbg-sid').textContent = state.sid;
+  $('dbg-state').textContent = JSON.stringify({ answers: state.answers, startedAt: state.startedAt, completedAt: state.completedAt, account: account ? { email: '(set)', createdAt: account.createdAt, simulated: true } : null });
+  try { $('dbg-score').textContent = JSON.stringify(score(), null, 1); } catch (e) { $('dbg-score').textContent = String(e); }
+  $('dbg-count').textContent = events.length;
+  $('dbg-events').textContent = events.slice(-40).reverse().map(function (e) { return new Date(e.t).toISOString().slice(11, 19) + ' ' + e.name + ' ' + JSON.stringify(e.props); }).join('\n');
+  var ls = {}; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf('iqly.') === 0) ls[k] = (localStorage.getItem(k) || '').length + ' bytes'; } } catch (e) {}
+  $('dbg-ls').textContent = JSON.stringify(ls, null, 1);
+}
+if (DEBUG) {
+  $('dbg').hidden = false; document.body.classList.add('has-dbg');
+  $('dbg-export').onclick = function () {
+    var blob = new Blob([JSON.stringify(events, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'iqly-events-' + CONFIG.variant + '.json'; document.body.appendChild(a); a.click(); a.remove();
+  };
+  $('dbg-reset').onclick = function () { lsDel(K.state); lsDel(K.account); location.reload(); };
+  $('dbg-wipe').onclick = function () { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('iqly.') === 0) localStorage.removeItem(k); }); } catch (e) {} location.reload(); };
+  var dbgCollapsed = window.innerWidth < 700;
+  function dbgApply() {
+    $('dbg-body').hidden = dbgCollapsed; $('dbg-export').hidden = dbgCollapsed; $('dbg-reset').hidden = dbgCollapsed; $('dbg-wipe').hidden = dbgCollapsed;
+    $('dbg-toggle').textContent = dbgCollapsed ? 'Expand' : 'Collapse';
+    document.body.classList.toggle('has-dbg', !dbgCollapsed); document.body.classList.toggle('has-dbg-min', dbgCollapsed);
+  }
+  $('dbg-toggle').onclick = function () { dbgCollapsed = !dbgCollapsed; dbgApply(); };
+  dbgApply();
+}
+
+/* ---------- boot ---------- */
+if (!fresh && state.screen !== 'LANDING') {
+  track('resume_restored', { screen: state.screen, q: state.q });
+  if (state.screen === 'CALCULATING') state.screen = 'RESULT';
+  if (state.screen === 'SIGNUP' && account) state.screen = CONFIG.gate === 'pre-quiz' ? 'QUIZ' : 'RESULT';
+}
+go(state.screen);
+})();
+</script>
+</body>
+</html>
