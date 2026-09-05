@@ -8,7 +8,7 @@
 <meta name="description" content="A free 12-question IQ test, no payment. A free account (email only, no password) shows your IQ range and rank and saves your result with the full answer review.">
 <!--
   IQly funnel prototype — standalone, offline, no backend, no build step, no external requests.
-  Generated from tools/template.html by tools/build.py. VARIANT: TEST 3 — landing disclosure prominence: one line under the CTA instead of the block above it
+  Generated from tools/template.html by tools/build.py. VARIANT: TEST 3 — signup timing: the same free account is created before question 1 (disclosed on the landing) instead of after the last question
   Account creation is SIMULATED with client-side validation + localStorage. Nothing is sent anywhere.
   Debug panel: open with ?debug=1 (event timeline, state, score object, storage, export, reset).
 -->
@@ -141,6 +141,11 @@ fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
 .more[open] summary::after{content:"–"}
 .more .body{padding:0 14px 12px}
 .more .prof{margin:0}
+.hist{list-style:none;padding:0;margin:0}
+.hist li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--paper-3);font-size:15px}
+.hist li:last-child{border-bottom:0}
+.hist .hb{font-family:var(--serif)}
+.curvecap{font-size:12px;color:var(--ink-3);text-align:center;margin:2px 0 0}
 
 /* ---------- signup ---------- */
 .form{margin:16px 0}
@@ -176,14 +181,21 @@ body.has-dbg-min{padding-bottom:48px}
     <section id="s-landing" aria-labelledby="h-landing">
       <p class="eyebrow">Free IQ test · 12 questions · ~5 min</p>
       <h1 class="h1" id="h-landing">Find out your IQ range and where you rank.</h1>
-      <p class="lead">Twelve reasoning questions, no timer. Result the moment you finish.</p>
+      <p class="lead">Twelve reasoning questions, no timer. Your result, rank and answer review the moment you finish.</p>
       <ul class="facts" aria-label="Test facts">
         <li><b>12</b><span>questions</span></li>
         <li><b>~5</b><span>minutes</span></li>
         <li><b>4</b><span>areas</span></li>
       </ul>
-      <button class="btn" id="btn-start" type="button">Start the test</button>
-      <p class="small" id="landing-small" style="margin-top:12px">Free to take. A free account (email only) at the end shows your IQ range and rank. No payment, ever. A short reasoning test, not a clinical IQ assessment. <span id="landing-resume"></span></p>
+      <div class="disclose" id="disclose">
+        <strong>Free to take. Free account first.</strong>
+        <ul>
+          <li><b>Free, no payment:</b> all 12 questions, your IQ range and your rank.</li>
+          <li><b>Free account (email only, no password) before question 1:</b> your result, rank and answer review are saved to it the moment you finish.</li>
+        </ul>
+      </div>
+      <button class="btn" id="btn-start" type="button">Create free account and start</button>
+      <p class="small" id="landing-small" style="margin-top:12px">No payment, ever. A short reasoning test, not a clinical IQ assessment. <span id="landing-resume"></span></p>
     </section>
 
     <!-- QUIZ -->
@@ -223,6 +235,9 @@ body.has-dbg-min{padding-bottom:48px}
       <ul class="stat" id="res-stats"></ul>
       <div class="lock" id="res-lock"></div>
       <div id="res-actions" class="row" style="margin-bottom:16px"></div>
+      <p class="small" id="res-storage" hidden style="margin:-6px 0 14px"></p>
+      <details class="more" id="res-details-sample" hidden><summary>See one explanation from your review</summary><div class="body" id="res-sample"></div></details>
+      <details class="more" id="res-details-history" hidden><summary id="res-history-sum">Your attempts</summary><div class="body"><ol class="hist" id="res-history"></ol></div></details>
       <details class="more" id="res-details-iq" hidden><summary>Why a range, not a number</summary><div class="body iqnote" id="res-iqnote"></div></details>
       <details class="more" id="res-details-profile" hidden><summary>Your answers by area</summary>
         <div class="body" id="res-profile-wrap">
@@ -274,9 +289,9 @@ body.has-dbg-min{padding-bottom:48px}
 <script>
 /* ======================= CONFIG (the only block that differs between variants) ======================= */
 var CONFIG = {
-  "variant": "v3-one-line-disclosure",
-  "gate": "gate",
-  "disclosure": "line",
+  "variant": "v3-signup-first",
+  "gate": "pre-quiz",
+  "disclosure": "block",
   "questionCount": 12
 };
 /* ====================================================================================================== */
@@ -582,10 +597,20 @@ var IQLY_RENDER = (function () {
 
 /* ---------- storage keys (namespaced per variant so standalone files never share state) ---------- */
 var NS = 'iqly.' + CONFIG.variant + '.';
-var K = { state: NS + 'state', events: NS + 'events', account: NS + 'account' };
+var K = { state: NS + 'state', events: NS + 'events', account: NS + 'account', history: NS + 'history', once: NS + 'once' };
+var NOSTORAGE = /[?&]nostorage=1/.test(location.search);   /* QA hook: simulate a browser that blocks storage */
+var storageFailed = false;
 
-function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
-function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable: session continues in memory */ } }
+function lsGet(k, d) { try { if (NOSTORAGE) return d; var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) {
+  /* Writes are verified by reading back; a failed or unverifiable write is remembered so the UI never claims "saved" falsely. */
+  try {
+    if (NOSTORAGE) throw new Error('storage blocked (simulated)');
+    var s = JSON.stringify(v); localStorage.setItem(k, s);
+    if (localStorage.getItem(k) !== s) throw new Error('read-back mismatch');
+    return true;
+  } catch (e) { storageFailed = true; return false; }
+}
 function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 function $(id) { return document.getElementById(id); }
@@ -597,6 +622,9 @@ var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-moti
 var QUESTIONS = CONFIG.items ? CONFIG.items.map(function (i) { return IQLY_QUESTIONS[i]; }) : IQLY_QUESTIONS.slice(0, CONFIG.questionCount);
 var N = QUESTIONS.length;
 window.IQLY_ACTIVE = QUESTIONS;   /* exposed for the offline test harness */
+window.IQLY_EVENTS = function () { return events; };   /* harness hooks: read in-memory state even when storage is blocked */
+window.IQLY_STATE = function () { return state; };
+window.IQLY_ACCOUNT = function () { return account; };
 var CATS = { pattern: 'Pattern recognition', numerical: 'Numerical reasoning', logical: 'Logical reasoning', spatial: 'Spatial reasoning' };
 var CAT_ORDER = ['pattern', 'numerical', 'logical', 'spatial'];
 
@@ -608,15 +636,17 @@ if (!state) {
 }
 var account = lsGet(K.account, null);
 var events = lsGet(K.events, []);
-var onceFired = {};
-events.forEach(function (e) { if (e.once) onceFired[e.name] = true; });
+var history = lsGet(K.history, []);
+/* once-per-session flags are stored separately from the event log, so truncating the log can never re-fire a milestone */
+var onceFired = lsGet(K.once, null);
+if (!onceFired) { onceFired = {}; events.forEach(function (e) { if (e.once) onceFired[e.name] = true; }); }
 
 function save() { lsSet(K.state, state); }
 
 /* ---------- analytics (local event log; production would POST the same payloads) ---------- */
-var ONCE = { landing_view:1, landing_disclosure_view:1, quiz_start:1, quiz_25:1, quiz_50:1, quiz_75:1, quiz_complete:1, scoring_view:1, scoring_complete:1, result_teaser_view:1, signup_view:1, signup_start:1, signup_complete:1, result_view:1, resume_restored:1 };
+var ONCE = { landing_view:1, landing_disclosure_view:1, quiz_start:1, quiz_25:1, quiz_50:1, quiz_75:1, quiz_complete:1, scoring_view:1, scoring_complete:1, result_teaser_view:1, signup_view:1, signup_start:1, signup_complete:1, result_view:1, resume_restored:1, history_view:1, storage_unavailable:1 };
 function track(name, props) {
-  if (ONCE[name]) { if (onceFired[name]) return; onceFired[name] = true; }
+  if (ONCE[name]) { if (onceFired[name]) return; onceFired[name] = true; lsSet(K.once, onceFired); }
   var e = { name: name, t: Date.now(), sid: state.sid, variant: CONFIG.variant, screen: state.screen, props: props || {}, once: !!ONCE[name] };
   events.push(e);
   if (events.length > 500) events = events.slice(-500);
@@ -626,14 +656,16 @@ function track(name, props) {
 
 /* ---------- scoring (deterministic, transparent) ---------- */
 function score() {
-  var raw = 0, byCat = {}, answered = 0;
+  var raw = 0, byCat = {}, answered = 0, skipped = 0;
   CAT_ORDER.forEach(function (c) { byCat[c] = { correct: 0, total: 0 }; });
   QUESTIONS.forEach(function (q, i) {
     byCat[q.cat].total++;
     var a = state.answers[i];
+    if (a === 'skip') skipped++;
     if (a !== undefined && a !== null && a !== 'skip') answered++;
     if (a === q.key) { raw++; byCat[q.cat].correct++; }
   });
+  var incorrect = answered - raw;
   var pct = raw / N;
   /* Illustrative band mapping for the prototype. NOT a normed score. Bands are deliberately broad. */
   var band;
@@ -642,7 +674,13 @@ function score() {
   else if (pct >= 0.4) band = { label: 'Average range',            iq: 'around 90 to 110',     pctl: 'middle ~50%' };
   else                 band = { label: 'Below average range',      iq: 'around 90 or lower',   pctl: 'lower ~25%' };
   var strongest = CAT_ORDER.slice().sort(function (a, b) { return (byCat[b].correct / byCat[b].total) - (byCat[a].correct / byCat[a].total); })[0];
-  return { raw: raw, total: N, pct: pct, answered: answered, byCat: byCat, band: band, strongest: strongest };
+  return { raw: raw, total: N, pct: pct, answered: answered, incorrect: incorrect, skipped: skipped, unanswered: N - answered - skipped, byCat: byCat, band: band, strongest: strongest };
+}
+function countsLine(s) {
+  var parts = [s.raw + ' correct', s.incorrect + ' incorrect'];
+  if (s.skipped) parts.push(s.skipped + ' skipped');
+  if (s.unanswered) parts.push(s.unanswered + ' unanswered');
+  return parts.join(' · ');
 }
 
 /* ---------- navigation ---------- */
@@ -725,7 +763,12 @@ function next() {
 function finishQuiz() {
   state.completedAt = state.completedAt || Date.now(); save();
   var s = score();
-  track('quiz_complete', { raw: s.raw, answered: s.answered, ms: state.completedAt - state.startedAt });
+  track('quiz_complete', { raw: s.raw, answered: s.answered, skipped: s.skipped, ms: state.completedAt - state.startedAt });
+  /* every completed attempt is kept, so "history if you retake" is a behaviour, not a promise */
+  if (!history.some(function (h) { return h.at === state.completedAt; })) {
+    history.push({ at: state.completedAt, raw: s.raw, total: N, answered: s.answered, band: s.answered >= Math.ceil(N / 2) ? s.band.label : null });
+    lsSet(K.history, history);
+  }
   go('CALCULATING');
 }
 $('btn-back').addEventListener('click', function () {
@@ -739,12 +782,16 @@ $('btn-skip').addEventListener('click', function () {
   track('question_skipped', { q: i + 1, id: QUESTIONS[i].id });
   next();
 });
-$('btn-start').addEventListener('click', function () {
-  track('landing_cta_click');
+function startQuiz() {
+  /* quiz_start fires only when question 1 is actually about to show; in the signup-first arm that is after the account */
   if (!state.startedAt) { state.startedAt = Date.now(); state.q = 0; state.answers = []; }
   track('quiz_start', { questions: N });
-  if (CONFIG.gate === 'pre-quiz' && !account) { go('SIGNUP'); return; }
   go('QUIZ');
+}
+$('btn-start').addEventListener('click', function () {
+  track('landing_cta_click');
+  if (CONFIG.gate === 'pre-quiz' && !account) { go('SIGNUP'); return; }
+  startQuiz();
 });
 
 /* ---------- calculating: real steps, short, honest ---------- */
@@ -777,7 +824,8 @@ function curveSvg(pct) {
 
 var IQ_NOTE = 'On the familiar IQ scale (average 100) a result in this range would typically sit <b>%IQ%</b>. A ' + N + '-question test cannot pin down a number: the uncertainty is about ±15 points, so IQly shows a range, not a score.';
 var DISCLAIMER = 'IQly is a short online reasoning test, not a clinical or psychometrically normed IQ assessment. The range and rank are estimates from a prototype scoring model; in production the rank is computed from IQly test-takers to date, shown with its sample size, and updated as more people take the test. Do not use this result for medical, educational or employment decisions.';
-var RANK_LABEL = 'estimated rank among IQly test-takers · provisional';
+var RANK_LABEL = 'estimated rank among IQly test-takers · provisional estimate';
+var CURVE_CAP = '<p class="curvecap">Illustrative scale, not a measured distribution.</p>';
 
 function renderProfile(s) {
   var prof = $('res-profile'); prof.innerHTML = '';
@@ -802,6 +850,27 @@ function setDetails(id, show, html) {
   var d = $(id); d.hidden = !show; d.open = false;
   if (html !== undefined) d.querySelector('.body').innerHTML = html;
 }
+function sampleHtml() {
+  /* one true item from the review: question 1 (already public in the creatives), with the user's own mark */
+  var q = QUESTIONS[0], a = state.answers[0], right = a === q.key;
+  var chosen = a === 'skip' || a === undefined || a === null ? 'you skipped it' : 'you chose option ' + (a + 1);
+  return '<div class="rq" style="margin:8px 0 4px"><span class="mark' + (right ? '' : ' no') + '" style="display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--paper);background:' + (right ? 'var(--ok)' : 'var(--err)') + ';margin-right:6px">' + (right ? '✓' : '✗') + '</span>Q1 · ' + CATS[q.cat] + (right ? ' · correct' : ' · correct answer: option ' + (q.key + 1) + ' (' + chosen + ')') + '</div><div class="rx" style="font-size:14px;color:var(--ink-2)">' + esc(q.explain || '') + '</div><p class="small" style="margin:8px 0 0">Your review explains all ' + N + ' questions like this.</p>';
+}
+function renderHistory() {
+  var ol = $('res-history'); ol.innerHTML = '';
+  history.slice().reverse().forEach(function (h, i) {
+    var d = new Date(h.at);
+    ol.innerHTML += '<li><span>' + d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) + (i === 0 ? ' · latest' : '') + '</span><span class="hb">' + h.raw + '/' + h.total + (h.band ? ' · ' + esc(h.band) : '') + '</span></li>';
+  });
+  $('res-history-sum').textContent = 'Your attempts (' + history.length + ')';
+}
+function storageLine() {
+  var el = $('res-storage');
+  if (storageFailed || (account && account.durable === false)) {
+    el.textContent = 'Kept for this tab only: your browser blocked storage, so this result and account will not be here after you close the tab.';
+    el.hidden = false; track('storage_unavailable', { reason: NOSTORAGE ? 'simulated' : 'write' });
+  } else el.hidden = true;
+}
 function noteWithRetake() {
   $('res-note').innerHTML = esc(DISCLAIMER) + ' <button class="link" id="btn-retake2" type="button" style="min-height:auto;padding:0">Retake the test</button>';
   $('btn-retake2').onclick = restart;
@@ -817,7 +886,7 @@ function renderResult() {
     $('res-eyebrow').textContent = 'Your result';
     $('h-result').textContent = 'Not enough answers to estimate a range';
     $('res-range').textContent = 'You answered ' + s.answered + ' of ' + N + ' questions (' + s.raw + ' correct). A range and rank need at least ' + Math.ceil(N / 2) + ' answers.';
-    $('curve').innerHTML = ''; $('res-stats').innerHTML = ''; setDetails('res-details-iq', false); setDetails('res-details-profile', false); $('res-review-wrap').hidden = true;
+    $('curve').innerHTML = ''; $('res-stats').innerHTML = ''; setDetails('res-details-iq', false); setDetails('res-details-profile', false); setDetails('res-details-sample', false); setDetails('res-details-history', false); $('res-storage').hidden = true; $('res-review-wrap').hidden = true;
     $('res-lock').innerHTML = '<h3>Try again with all questions</h3><p class="small" style="margin:0">Skipped questions count as unanswered. Take your time — there is no timer.</p>';
     $('res-actions').innerHTML = '<button class="btn" id="btn-retake" type="button">Retake the test</button>';
     $('btn-retake').onclick = restart;
@@ -827,17 +896,19 @@ function renderResult() {
   }
 
   renderProfile(s);
+  setDetails('res-details-history', false); $('res-storage').hidden = true;
 
   if (gated) {
     /* CONTROL gate screen: a true partial result (how many correct), then the account card. No blurred values, no fake locked numbers. */
     $('res-eyebrow').textContent = 'Your result is ready';
     $('h-result').textContent = 'You answered ' + s.raw + ' of ' + N + ' correctly.';
-    $('res-range').textContent = 'Your IQ range and your rank among IQly test-takers are ready to view.';
+    $('res-range').textContent = countsLine(s) + '. Your IQ range and rank are ready to view.';
     $('curve').innerHTML = ''; $('curve').setAttribute('aria-label', ''); $('res-stats').innerHTML = '';
     $('res-lock').innerHTML = '<h3>Create your free account to see your result</h3><ul><li><b>Your IQ range</b> on the familiar scale</li><li><b>Your rank</b> among IQly test-takers, updated as more people take the test</li><li><b>The full answer review:</b> which questions you missed, and why</li><li>Saved to your account, with history if you retake</li></ul><p class="small" style="margin:0">Free. Email only, no password. No payment, ever.</p>';
     $('res-actions').innerHTML = '<button class="btn" id="btn-unlock" type="button">Create free account and see my result</button>';
     $('btn-unlock').onclick = function () { go('SIGNUP'); };
     setDetails('res-details-iq', false);
+    setDetails('res-details-sample', true, sampleHtml());
     setDetails('res-details-profile', true);
     noteWithRetake();
     track('result_teaser_view', { raw: s.raw, mode: 'gate' });
@@ -846,15 +917,17 @@ function renderResult() {
 
   $('res-eyebrow').textContent = full ? 'Your result · saved to ' + account.email : 'Your result';
   $('h-result').textContent = s.band.label;
-  $('res-range').innerHTML = 'You answered <b>' + s.raw + ' of ' + N + '</b> questions correctly.';
-  $('curve').innerHTML = curveSvg(s.pct); $('curve').setAttribute('aria-label', 'Reference curve with your range, ' + s.band.label + ', highlighted');
+  $('res-range').innerHTML = 'You answered <b>' + s.raw + ' of ' + N + '</b> questions correctly (' + countsLine(s) + ').';
+  $('curve').innerHTML = curveSvg(s.pct) + CURVE_CAP; $('curve').setAttribute('aria-label', 'Illustrative reference curve with your range, ' + s.band.label + ', highlighted');
   $('res-stats').innerHTML = '<li><b>' + s.raw + ' / ' + N + '</b><span>correct answers</span></li><li><b>' + esc(s.band.pctl) + '</b><span>' + RANK_LABEL + '</span></li>';
   setDetails('res-details-iq', true, IQ_NOTE.replace('%IQ%', esc(s.band.iq)));
+  setDetails('res-details-sample', false);
   setDetails('res-details-profile', true);
 
   if (full) {
     renderReview();
-    $('res-lock').innerHTML = '<h3>What this means</h3><p>A ' + N + '-question test gives a broad estimate, not a precise number: two people with the same true ability can land in neighbouring ranges, and the same person can move a range between days. Retaking after a break is a fair check, and your history is kept here.</p><p class="small" style="margin:0">Saved to your account. Your rank updates as more people take the test. Retake any time.</p>';
+    renderHistory(); setDetails('res-details-history', true); storageLine();
+    $('res-lock').innerHTML = '<h3>What this means</h3><p>A ' + N + '-question test gives a broad estimate, not a precise number: two people with the same true ability can land in neighbouring ranges, and the same person can move a range between days. Retaking after a break is a fair check, and every attempt is kept below.</p><p class="small" style="margin:0">Saved to your account. Your rank updates as more people take the test. Retake any time.</p>';
     $('res-actions').innerHTML = '<button class="btn btn-ghost" id="btn-copy" type="button">Copy my result</button><button class="btn btn-ghost" id="btn-retake" type="button">Retake the test</button>';
     $('btn-copy').onclick = function () {
       var txt = 'IQly result: ' + s.band.label + ' — ' + s.raw + '/' + N + ' correct, estimated rank ' + s.band.pctl + ' of IQly test-takers (short online reasoning test, not a clinical assessment).';
@@ -873,8 +946,13 @@ function renderResult() {
     track('result_teaser_view', { raw: s.raw, band: s.band.label, mode: 'score-first' });
   }
 }
-['res-details-iq', 'res-details-profile'].forEach(function (id) {
-  $(id).addEventListener('toggle', function () { if ($(id).open) track('result_details_open', { which: id === 'res-details-iq' ? 'why_a_range' : 'by_area' }); });
+var DETAIL_NAMES = { 'res-details-iq': 'why_a_range', 'res-details-profile': 'by_area', 'res-details-sample': 'sample_explanation', 'res-details-history': 'history' };
+Object.keys(DETAIL_NAMES).forEach(function (id) {
+  $(id).addEventListener('toggle', function () {
+    if (!$(id).open) return;
+    if (id === 'res-details-history') track('history_view', { attempts: history.length });
+    else track('result_details_open', { which: DETAIL_NAMES[id] });
+  });
 });
 
 /* ---------- signup (simulated account) ---------- */
@@ -908,10 +986,12 @@ $('su-form').addEventListener('submit', function (ev) {
   submitting = true; $('btn-signup').disabled = true; $('btn-signup').textContent = 'Creating your account…';
   setTimeout(function () {
     account = { email: v, marketing: $('mkt').checked, createdAt: Date.now(), sid: state.sid, simulated: true };
-    lsSet(K.account, account);
-    track('signup_complete', { marketing: account.marketing, email_domain_hash: hash(v.split('@')[1] || '') });
+    var durable = lsSet(K.account, account);
+    account.durable = durable;            /* verified by read-back; false means the tab is the only copy */
+    if (durable) lsSet(K.account, account);
+    track('signup_complete', { marketing: account.marketing, durable: durable, email_domain_hash: hash(v.split('@')[1] || '') });
     submitting = false; $('btn-signup').disabled = false; $('btn-signup').textContent = 'Create my free account';
-    if (CONFIG.gate === 'pre-quiz') go('QUIZ'); else go('RESULT');
+    if (CONFIG.gate === 'pre-quiz') startQuiz(); else go('RESULT');
   }, reduceMotion ? 0 : 500);
 });
 $('btn-su-back').addEventListener('click', function () { go(CONFIG.gate === 'pre-quiz' ? 'LANDING' : 'RESULT'); });
@@ -931,7 +1011,7 @@ function dbgRender() {
   if (!DEBUG) return;
   $('dbg-variant').textContent = CONFIG.variant + ' · gate=' + CONFIG.gate + ' · disclosure=' + CONFIG.disclosure + ' · n=' + N;
   $('dbg-screen').textContent = state.screen; $('dbg-q').textContent = (state.q + 1) + '/' + N; $('dbg-sid').textContent = state.sid;
-  $('dbg-state').textContent = JSON.stringify({ answers: state.answers, startedAt: state.startedAt, completedAt: state.completedAt, account: account ? { email: '(set)', createdAt: account.createdAt, simulated: true } : null });
+  $('dbg-state').textContent = JSON.stringify({ answers: state.answers, startedAt: state.startedAt, completedAt: state.completedAt, account: account ? { email: '(set)', createdAt: account.createdAt, simulated: true, durable: account.durable } : null, attempts: history.length, storageFailed: storageFailed });
   try { $('dbg-score').textContent = JSON.stringify(score(), null, 1); } catch (e) { $('dbg-score').textContent = String(e); }
   $('dbg-count').textContent = events.length;
   $('dbg-events').textContent = events.slice(-40).reverse().map(function (e) { return new Date(e.t).toISOString().slice(11, 19) + ' ' + e.name + ' ' + JSON.stringify(e.props); }).join('\n');
@@ -944,7 +1024,7 @@ if (DEBUG) {
     var blob = new Blob([JSON.stringify(events, null, 1)], { type: 'application/json' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'iqly-events-' + CONFIG.variant + '.json'; document.body.appendChild(a); a.click(); a.remove();
   };
-  $('dbg-reset').onclick = function () { lsDel(K.state); lsDel(K.account); location.reload(); };
+  $('dbg-reset').onclick = function () { lsDel(K.state); lsDel(K.account); lsDel(K.history); lsDel(K.once); location.reload(); };
   $('dbg-wipe').onclick = function () { try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('iqly.') === 0) localStorage.removeItem(k); }); } catch (e) {} location.reload(); };
   var dbgCollapsed = window.innerWidth < 700;
   function dbgApply() {
