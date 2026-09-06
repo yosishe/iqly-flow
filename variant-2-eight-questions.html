@@ -191,7 +191,7 @@ body.has-dbg-min{padding-bottom:48px}
         <strong>Free to take. Free account at the end.</strong>
         <ul>
           <li><b>Free, no payment:</b> all 8 questions, and how many you got right.</li>
-          <li><b>Free account (email only, no password):</b> shows your IQ range and rank, and saves them with the answer review.</li>
+          <li><b>Free account (email only, no password, no payment):</b> IQ range and rank, full answer review (what you missed and why), attempt history if you retake, and delete anytime in this browser.</li>
         </ul>
       </div>
       <button class="btn" id="btn-start" type="button">Start the test</button>
@@ -256,16 +256,16 @@ body.has-dbg-min{padding-bottom:48px}
     <!-- SIGNUP -->
     <section id="s-signup" hidden aria-labelledby="h-signup">
       <p class="eyebrow" id="su-eyebrow">Free account</p>
-      <h2 id="h-signup" style="font-size:28px">Create your free account to see your result</h2>
+      <h2 id="h-signup" style="font-size:28px">Create your free account (no payment) to see your result</h2>
       <p class="lead" id="su-lead" style="font-size:16px"></p>
       <form class="form" id="su-form" novalidate>
         <label class="lbl" for="email">Email address</label>
         <input class="inp" id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" aria-describedby="email-err email-help">
         <p class="errmsg" id="email-err" role="alert" aria-live="assertive"></p>
-        <p class="small" id="email-help">Only your email, no password. Returning users get a sign-in link instead of a password.</p>
+        <p class="small" id="email-help">Only your email, no password, no payment. Returning users get a sign-in link instead of a password.</p>
         <label class="chk"><input type="checkbox" id="mkt" name="mkt"><span>Also send me occasional IQly updates. Optional.</span></label>
         <button class="btn" id="btn-signup" type="submit">Create my free account</button>
-        <p class="small" style="margin-top:10px">By continuing you agree to IQly's Terms and Privacy Policy. You can delete your account and data at any time.</p>
+        <p class="small" style="margin-top:10px">By continuing you agree to IQly's Terms and Privacy Policy. You can delete your account and saved result from this browser at any time.</p>
         <p class="demo"><b>Prototype note:</b> this page runs offline. Your email is validated in the browser and kept only in this browser's storage. No email is sent and no real account exists on a server. Terms and Privacy Policy are placeholders here.</p>
       </form>
       <button class="link" id="btn-su-back" type="button">← Back to my result</button>
@@ -970,8 +970,8 @@ function renderResult() {
     $('h-result').textContent = 'You answered ' + s.raw + ' of ' + N + ' correctly.';
     $('res-range').textContent = countsLine(s) + '. Your IQ range and rank are ready to view.';
     $('curve').innerHTML = ''; $('curve').setAttribute('aria-label', ''); $('res-stats').innerHTML = '';
-    $('res-lock').innerHTML = '<h3>Create your free account to see your result</h3><ul><li><b>Your IQ range</b> on the familiar scale</li><li><b>Your rank</b> among IQly test-takers, updated as more people take the test</li><li><b>The full answer review:</b> which questions you missed, and why</li><li>Saved to your account, with history if you retake</li></ul><p class="small" style="margin:0">Free. Email only, no password. No payment, ever.</p>';
-    $('res-actions').innerHTML = '<button class="btn" id="btn-unlock" type="button">Create free account and see my result</button>';
+    $('res-lock').innerHTML = '<h3>Create your free account (no payment) to see your result</h3><ul><li>Your IQ range on the familiar scale</li><li>Your rank among IQly test-takers, updated as more people take the test</li><li>Full answer review: every question you missed, and why</li><li>Attempt history: every retake kept under your account</li><li>Delete control: remove your account and data from this browser anytime</li></ul><p class="small" style="margin:0">Free. Email only, no password. No payment, ever — not a trial, not a card.</p>';
+    $('res-actions').innerHTML = '<button class="btn" id="btn-unlock" type="button">Create free account (no payment)</button>';
     $('btn-unlock').onclick = function () { go('SIGNUP'); };
     setDetails('res-details-iq', false);
     setDetails('res-details-sample', true, sampleHtml());
@@ -1002,7 +1002,7 @@ function renderResult() {
       track('result_copy');
     };
     $('btn-retake').onclick = restart;
-    /* the signup screen promises "you can delete your account and data at any time": this is that control */
+    /* the signup screen promises "you can delete your account and saved result from this browser at any time": this is that control */
     $('res-note').innerHTML = esc(DISCLAIMER) + ' <button class="link" id="btn-delete" type="button" style="min-height:auto;padding:0">Delete my account and data from this browser</button>';
     $('btn-delete').onclick = deleteAccount;
     track('result_view', { raw: s.raw, band: s.band.label, revealed: ['raw', 'band', 'rank', 'review', 'history'] });
@@ -1029,8 +1029,8 @@ Object.keys(DETAIL_NAMES).forEach(function (id) {
 var submitting = false;
 function renderSignup() {
   var pre = CONFIG.gate === 'pre-quiz';
-  $('h-signup').textContent = pre ? 'Create your free account to start the test' : (CONFIG.gate === 'gate' ? 'Create your free account to see your result' : 'Save your result and unlock the answer review');
-  $('su-lead').textContent = pre ? 'Your range, rank and answer review are saved to your account the moment you finish.' : (CONFIG.gate === 'gate' ? 'Your answers are already scored. The account shows your IQ range and rank, and keeps the full answer review.' : 'Your range and rank stay free. The account keeps them and adds the full answer review with explanations.');
+  $('h-signup').textContent = pre ? 'Create your free account to start the test' : (CONFIG.gate === 'gate' ? 'Create your free account (no payment) to see your result' : 'Save your result and unlock the answer review');
+  $('su-lead').textContent = pre ? 'Your range, rank and answer review are saved to your account the moment you finish.' : (CONFIG.gate === 'gate' ? 'Your answers are already scored. The free account (email only, no payment) shows your IQ range and rank, keeps the full answer review, saves attempt history if you retake, and lets you delete everything from this browser anytime.' : 'Your range and rank stay free. The account keeps them and adds the full answer review with explanations.');
   $('btn-su-back').textContent = pre ? '← Back' : '← Back to my result';
   $('email-err').textContent = ''; $('email').removeAttribute('aria-invalid');
   track('signup_view', { gate: CONFIG.gate });

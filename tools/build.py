@@ -58,7 +58,7 @@ SCORE_FIRST_LEAD = 'Your IQ range and rank the moment you finish.'
 GATE_BLOCK = ('<strong>Free to take. Free account at the end.</strong>\n'
               '        <ul>\n'
               '          <li><b>Free, no payment:</b> all 12 questions, and how many you got right.</li>\n'
-              '          <li><b>Free account (email only, no password):</b> shows your IQ range and rank, and saves them with the answer review.</li>\n'
+              '          <li><b>Free account (email only, no password, no payment):</b> IQ range and rank, full answer review (what you missed and why), attempt history if you retake, and delete anytime in this browser.</li>\n'
               '        </ul>')
 SCORE_FIRST_BLOCK = ('<strong>What is free, and what needs an account</strong>\n'
                      '        <ul>\n'
