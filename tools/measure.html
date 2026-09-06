@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>IQly fold measure</title>
+<style>body{font:13px/1.4 ui-monospace,Menlo,monospace;margin:0;padding:10px;background:#111;color:#ddd}iframe{border:1px solid #444;background:#fff}pre{white-space:pre-wrap}</style></head>
+<body>
+<pre id="out">running…</pre>
+<iframe id="f"></iframe>
+<script>
+/* Measures where the key elements sit on the page at a given CSS width, so "CTA within the first viewport" is a number, not a claim.
+   Run: chrome --headless=new --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom "file://.../tools/measure.html?file=index.html&w=375&h=667&screen=result"
+   screen = landing | result | full   (result = the screen a completer sees before any account; full = after the simulated account) */
+var p = new URLSearchParams(location.search);
+var file = p.get('file') || 'index.html', W = Number(p.get('w') || 375), H = Number(p.get('h') || 667), screen = p.get('screen') || 'result';
+var f = document.getElementById('f'); f.style.width = W + 'px'; f.style.height = H + 'px';
+var win, doc;
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function load() { return new Promise(function (r) { f.onload = function () { win = f.contentWindow; doc = f.contentDocument; setTimeout(r, 50); }; f.src = '../submission/' + file + '?x=1'; }); }
+function box(id) { var el = doc.getElementById(id); if (!el || el.hidden || el.offsetParent === null) return null; var r = el.getBoundingClientRect(); return { top: Math.round(r.top + win.scrollY), bottom: Math.round(r.bottom + win.scrollY) }; }
+(async function () {
+  var out = { file: file, width: W, viewport: H, screen: screen, elements: {} };
+  try {
+    await load();
+    try { Object.keys(win.localStorage).forEach(function (k) { if (k.indexOf('iqly.') === 0) win.localStorage.removeItem(k); }); } catch (e) {}
+    await load();
+    var N = win.CONFIG.questionCount, Q = win.IQLY_ACTIVE || win.IQLY_QUESTIONS;
+    if (screen === 'landing') {
+      ['h-landing', 'disclose', 'btn-start', 'landing-small'].forEach(function (id) { out.elements[id] = box(id); });
+    } else {
+      doc.getElementById('btn-start').click(); await sleep(60);
+      if (win.CONFIG.gate === 'pre-quiz') {
+        if (screen === 'signup') { ['h-signup', 'email', 'btn-signup'].forEach(function (id) { out.elements[id] = box(id); }); out.pageHeight = doc.documentElement.scrollHeight; var b = out.elements['btn-signup']; out.ctaBottom = b ? b.bottom : null; out.ctaWithinFirstViewport = b ? b.bottom <= H : null; document.getElementById('out').textContent = JSON.stringify(out, null, 1); return; }
+        var em = doc.getElementById('email'); em.value = 'person@example.com'; em.dispatchEvent(new win.Event('input'));
+        doc.getElementById('su-form').dispatchEvent(new win.Event('submit', { cancelable: true })); await sleep(800);
+      }
+      for (var i = 0; i < N; i++) { doc.querySelectorAll('#opts .opt')[Q[i].key].click(); await sleep(400); }
+      await sleep(2200);
+      if (screen === 'full') {
+        doc.getElementById('btn-unlock').click(); await sleep(120);
+        var em = doc.getElementById('email'); em.value = 'person@example.com'; em.dispatchEvent(new win.Event('input'));
+        doc.getElementById('su-form').dispatchEvent(new win.Event('submit', { cancelable: true })); await sleep(800);
+      }
+      ['h-result', 'res-range', 'curve', 'res-stats', 'res-lock', 'btn-unlock', 'res-actions', 'res-details-iq', 'res-details-profile', 'res-profile-wrap', 'res-iqnote', 'res-review-wrap', 'res-note'].forEach(function (id) { out.elements[id] = box(id); });
+      out.state = win.localStorage.getItem('iqly.' + win.CONFIG.variant + '.state') ? JSON.parse(win.localStorage.getItem('iqly.' + win.CONFIG.variant + '.state')).screen : null;
+    }
+    out.pageHeight = doc.documentElement.scrollHeight;
+    var cta = out.elements['btn-unlock'] || out.elements['btn-start'];
+    out.ctaBottom = cta ? cta.bottom : null;
+    out.ctaWithinFirstViewport = cta ? cta.bottom <= H : null;
+  } catch (e) { out.error = String(e && e.stack || e); }
+  document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+})();
+</script>
+</body></html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>IQly ad 1080×1920</title>
+<style>
+/* 1080×1920 full-screen vertical (interstitial / story). Key elements kept inside the safe area:
+   top 270px and bottom 670px are free of text, logo and CTA (Meta Stories/Reels guidance; AdX draws its own close button). */
+html,body{margin:0;background:#fff}
+.ad{position:relative;width:1080px;height:1920px;box-sizing:border-box;background:#f6f2ea;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1c2331;overflow:hidden}
+.safe{position:absolute;left:72px;right:72px;top:270px;bottom:670px;display:flex;flex-direction:column}
+.logo{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:700;font-size:64px;line-height:1}
+.logo b{background:#ffd23f;padding:0 10px;border-radius:6px}
+.eyebrow{margin-top:44px;font-size:30px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#7a8190}
+.h{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:82px;font-weight:600;line-height:1.08;margin:18px 0 40px;letter-spacing:-.01em}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:560px;margin:0 auto}
+.grid svg{width:100%;height:auto;display:block;background:#fff;border-radius:16px}
+.facts{display:flex;gap:16px;margin:56px 0 0;padding:0;list-style:none}
+.facts li{flex:1;background:#efe9dd;border-radius:18px;padding:22px 16px;text-align:center}
+.facts b{display:block;font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:56px;line-height:1.05}
+.facts span{font-size:26px;color:#4a5160}
+.cta{margin-top:auto;background:#1c2331;color:#f6f2ea;font-size:40px;font-weight:700;text-align:center;padding:38px 30px;border-radius:20px}
+.facts{margin-bottom:40px}
+.small{margin:22px 0 0;text-align:center;font-size:24px;color:#4a5160;line-height:1.3}
+.rule{position:absolute;left:0;right:0;bottom:0;height:24px;background:#ffd23f}
+</style></head>
+<body><div class="ad" role="img" aria-label="IQly. Free IQ test. Sample question 1 of 12: which tile completes the grid? 12 questions, about 5 minutes, 4 reasoning areas. Free to take, no payment, ever. A free account, email only, no password, shows your IQ range and rank. Start the free test.">
+  <div class="safe">
+    <div class="logo">IQ<b>ly</b></div>
+    <div class="eyebrow">Free IQ test · Sample question 1 of 12</div>
+    <div class="h">Which tile completes the grid?</div>
+    <div class="grid" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="12" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><circle cx="35" cy="50" r="12" fill="#1c2331"/><circle cx="65" cy="50" r="12" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><circle cx="22" cy="50" r="11" fill="#1c2331"/><circle cx="50" cy="50" r="11" fill="#1c2331"/><circle cx="78" cy="50" r="11" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><rect x="38" y="38" width="24" height="24" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><rect x="23" y="38" width="24" height="24" fill="#1c2331"/><rect x="53" y="38" width="24" height="24" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><rect x="11" y="39" width="22" height="22" fill="#1c2331"/><rect x="39" y="39" width="22" height="22" fill="#1c2331"/><rect x="67" y="39" width="22" height="22" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><polygon points="50,37 63,63 37,63" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><polygon points="35,37 48,63 22,63" fill="#1c2331"/><polygon points="65,37 78,63 52,63" fill="#1c2331"/></svg>
+      <svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#ffd23f"/><text x="50" y="66" text-anchor="middle" font-size="44" font-weight="700" fill="#1c2331" font-family="Georgia,serif">?</text></svg>
+    </div>
+    <ul class="facts"><li><b>12</b><span>questions</span></li><li><b>~5</b><span>minutes</span></li><li><b>4</b><span>reasoning areas</span></li></ul>
+    <div class="cta">Start the free test</div>
+    <p class="small">Free to take, no payment, ever. A free account (email only, no password) shows your IQ range and rank.</p>
+  </div>
+  <div class="rule"></div>
+</div></body></html>

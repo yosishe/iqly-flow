@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>device frame</title>
+<style>html,body{margin:0;background:#888}iframe{display:block;margin:0;border:0;background:#fff}</style>
+</head><body>
+<script>
+  /* QA harness: frame.html?src=qa-questions.html&w=375&h=6000 — renders the target at an exact CSS width
+     inside headless Chrome (whose minimum window width is ~500px). Screenshot is then cropped to (0,0,w,h). */
+  var p = new URLSearchParams(location.search);
+  var f = document.createElement('iframe');
+  f.src = p.get('src') || 'qa-questions.html';
+  f.width = p.get('w') || 375; f.height = p.get('h') || 6000;
+  document.body.appendChild(f);
+</script>
+</body></html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>IQly e2e</title>
+<style>body{font:13px/1.4 ui-monospace,Menlo,monospace;margin:0;padding:10px;background:#111;color:#ddd}iframe{width:375px;height:700px;border:1px solid #444;background:#fff}pre{white-space:pre-wrap}</style></head>
+<body>
+<pre id="out">running…</pre>
+<iframe id="f"></iframe>
+<script>
+/* Offline end-to-end test of a built funnel file. Run with headless Chrome:
+     chrome --headless=new --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom "file://.../tools/e2e.html?file=index.html&mode=allcorrect"
+   modes: allcorrect | allwrong | mixed | skip | resume | skipall | history | nostorage (invalid email and duplicate submit are exercised in every mode)
+   The harness drives the real DOM (clicks, typing) inside the iframe and prints PASS/FAIL lines into #out. */
+var p = new URLSearchParams(location.search);
+var file = p.get('file') || 'index.html', mode = p.get('mode') || 'allcorrect', stop = p.get('stop') || '';
+/* stop=quiz|result|signup|full : pause the harness at that screen (for screenshots) */
+function stopAt(name) { if (stop === name) { document.getElementById('out').textContent = 'STOPPED AT ' + name; throw { halt: true }; } }
+var results = [], f = document.getElementById('f'), W, D;
+if (p.get('w')) { f.style.width = p.get('w') + 'px'; f.style.height = (p.get('h') || 1400) + 'px'; }
+function ok(name, cond, info) { results.push((cond ? 'PASS ' : 'FAIL ') + name + (info ? ' — ' + info : '')); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function st() { return W.IQLY_STATE ? W.IQLY_STATE() : JSON.parse(W.localStorage.getItem('iqly.' + W.CONFIG.variant + '.state')); }
+function ev() { return W.IQLY_EVENTS ? W.IQLY_EVENTS() : JSON.parse(W.localStorage.getItem('iqly.' + W.CONFIG.variant + '.events') || '[]'); }
+function names() { return ev().map(function (e) { return e.name; }); }
+function visible(id) { var s = D.getElementById(id); return s && !s.hidden; }
+var loads = 0;   /* page loads since the last wipe(); the product's page_view count must equal it */
+function load(q, extra) { loads++; return new Promise(function (r) { f.onload = function () { W = f.contentWindow; D = f.contentDocument; setTimeout(r, 50); }; var base = (q || (p.get('nodebug') ? '?x=1' : '?debug=1')) + (extra || ''); if (mode === 'nostorage') base += '&nostorage=1'; f.src = '../submission/' + file + base; }); }
+function wipe() { loads = 0; try { Object.keys(W.localStorage).forEach(function (k) { if (k.indexOf('iqly.') === 0) W.localStorage.removeItem(k); }); } catch (e) {} }
+function reloaded() { return new Promise(function (r) { f.onload = function () { W = f.contentWindow; D = f.contentDocument; setTimeout(r, 50); }; }); }
+function count(n) { return names().filter(function (x) { return x === n; }).length; }
+/* the band rule is restated here on purpose: a test that reads the thresholds from the app cannot catch a wrong threshold */
+function expectBand(raw, n) { var p = raw / n; return p >= 0.85 ? 'Well above average range' : p >= 0.7 ? 'Above average range' : p >= 0.4 ? 'Average range' : 'Below average range'; }
+
+(async function () {
+  try {
+    await load(); wipe();
+    // segments: a hostile keyword param on a fresh state must be dropped, never stored or echoed
+    await load(null, '&kw=%3Cscript%3E&utm_term=%3Cscript%3E');
+    ok('hostile keyword param dropped', st().kw === undefined && JSON.stringify([st(), ev()]).indexOf('<script') < 0, 'kw=' + st().kw);
+    wipe();
+    // segments: a clean ValueTrack keyword is normalised; in one mode the platform's device value must beat the client proxy
+    var SEG = mode === 'allwrong' ? '&kw=free+iq+test&dev=c' : '&kw=free+iq+test';
+    await load(null, SEG);
+    ok('keyword normalised from the ValueTrack param', st().kw === 'free-iq-test', 'kw=' + st().kw);
+    ok(mode === 'allwrong' ? 'ValueTrack dev=c overrides the client proxy' : 'client proxy reports mobile at 375 px', st().dev === (mode === 'allwrong' ? 'desktop' : 'mobile'), 'dev=' + st().dev);
+    ok('device and keyword on every event', ev().length > 0 && ev().every(function (e) { return e.dev === st().dev && e.kw === 'free-iq-test'; }));
+    var N = W.CONFIG.questionCount, Q = W.IQLY_ACTIVE || W.IQLY_QUESTIONS;
+    ok('active question set matches config', Q.length === N, 'active=' + Q.length);
+    ok('landing visible', visible('s-landing'));
+    ok('no external requests in markup', !/https?:\/\/(?!www\.w3\.org)/.test(D.documentElement.outerHTML.replace(/<!--[\s\S]*?-->/g, '')), 'only the SVG namespace URL is allowed');
+    ok('landing_view logged once', names().filter(function (n) { return n === 'landing_view'; }).length === 1);
+    ok('page_view is the first event of every load (reload:false on a fresh state)', ev()[0] && ev()[0].name === 'page_view' && ev()[0].props.reload === false && ev()[0].props.screen === 'LANDING' && ev()[0].once === false && count('page_view') === 1);
+    if (W.CONFIG.disclosure === 'block') ok('disclosure block present', !!D.getElementById('disclose'));
+    else ok('one-line disclosure instead of the block (backlog disclosure arm)', !D.getElementById('disclose') && /account/i.test(D.getElementById('landing-small').textContent));
+    ok('landing_disclosure_view carries prominence', ev().some(function (e) { return e.name === 'landing_disclosure_view' && e.props.prominence === W.CONFIG.disclosure; }));
+
+    D.getElementById('btn-start').click(); await sleep(60);
+    if (W.CONFIG.gate === 'pre-quiz') {
+      ok('pre-quiz gate: signup shown before question 1', visible('s-signup') && /start the test/i.test(D.getElementById('h-signup').textContent));
+      ok('pre-quiz gate: no quiz_start before the account', names().indexOf('quiz_start') < 0);
+      D.getElementById('email').value = 'pre@example.com'; D.getElementById('email').dispatchEvent(new W.Event('input'));
+      D.getElementById('su-form').dispatchEvent(new W.Event('submit', { cancelable: true })); await sleep(700);
+      ok('pre-quiz gate: signup_complete precedes quiz_start', names().indexOf('signup_complete') >= 0 && names().indexOf('signup_complete') < names().indexOf('quiz_start'));
+    }
+    ok('quiz visible after start', visible('s-quiz'));
+    ok('quiz_start logged', names().indexOf('quiz_start') >= 0);
+    ok('question count matches config', D.getElementById('qnum').textContent === 'Question 1 of ' + N, D.getElementById('qnum').textContent);
+    if (stop.indexOf('q') === 0 && stop !== 'quiz') { var qi = Number(stop.slice(1)) - 1; for (var s0 = 0; s0 < qi; s0++) { D.querySelectorAll('#opts .opt')[Q[s0].key].click(); await sleep(400); } stopAt(stop); }
+    stopAt('quiz');
+
+    // keyboard: arrows move focus inside the radiogroup without selecting (selection would auto-advance)
+    var o0 = D.querySelectorAll('#opts .opt'); o0[0].focus();
+    o0[0].dispatchEvent(new W.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+    ok('ArrowRight moves focus to option 2 without selecting', D.activeElement === o0[1] && o0[1].tabIndex === 0 && o0[0].tabIndex === -1 && names().indexOf('answer_selected') < 0 && D.getElementById('qnum').textContent === 'Question 1 of ' + N, 'active=' + (D.activeElement && D.activeElement.getAttribute('aria-label')));
+    o0[1].dispatchEvent(new W.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+    o0[0].dispatchEvent(new W.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+    ok('ArrowUp wraps from the first option to the last', D.activeElement === o0[o0.length - 1]);
+
+    // Back restores selection: answer Q1, go to Q2, back, check aria-checked
+    var k0 = Q[0].key;
+    D.querySelectorAll('#opts .opt')[k0].click(); await sleep(400);
+    ok('auto-advanced to Q2', D.getElementById('qnum').textContent === 'Question 2 of ' + N);
+    D.getElementById('btn-back').click(); await sleep(50);
+    var checked = D.querySelector('#opts .opt[aria-checked="true"]');
+    ok('Back restores prior selection', checked && Number(checked.dataset.i) === k0);
+    ok('back_click logged', names().indexOf('back_click') >= 0);
+    // change answer on Q1 → answer_changed
+    D.querySelectorAll('#opts .opt')[(k0 + 1) % Q[0].options.length].click(); await sleep(400);
+    ok('answer_changed logged', names().indexOf('answer_changed') >= 0);
+    D.getElementById('btn-back').click(); await sleep(50);
+    D.querySelectorAll('#opts .opt')[k0].click(); await sleep(400);
+
+    // resume test: reload mid-quiz and expect the same question
+    if (mode === 'resume') {
+      var qBefore = st().q; await load(); await sleep(50);
+      ok('refresh restores quiz screen', visible('s-quiz') && st().q === qBefore, 'q=' + st().q);
+      ok('keyword survives a reload without the param (first-touch)', st().kw === 'free-iq-test', 'kw=' + st().kw);
+      ok('resume_restored logged', names().indexOf('resume_restored') >= 0);
+    }
+
+    var expectRaw = 1; // Q1 correct
+    for (var i = 1; i < N; i++) {
+      var q = Q[i], pick;
+      if (mode === 'skip' && i === 2) { D.getElementById('btn-skip').click(); await sleep(60); continue; }
+      if (mode === 'skipall') { D.getElementById('btn-skip').click(); await sleep(60); continue; }
+      if (mode === 'allwrong') pick = (q.key + 1) % q.options.length;
+      else if (mode === 'mixed') pick = (i % 2 === 0) ? q.key : (q.key + 1) % q.options.length;
+      else pick = q.key;
+      if (pick === q.key) expectRaw++;
+      D.querySelectorAll('#opts .opt')[pick].click(); await sleep(400);
+    }
+    if (mode === 'allwrong') expectRaw = 1;
+    await sleep(2200);
+    ok('calculating → result', visible('s-result'), 'screen=' + st().screen);
+    stopAt('result');
+    ok('quiz_complete logged once', names().filter(function (n) { return n === 'quiz_complete'; }).length === 1);
+    ok('scoring_view and scoring_complete logged', names().indexOf('scoring_view') >= 0 && names().indexOf('scoring_complete') >= 0);
+    var sc = ev().filter(function (e) { return e.name === 'quiz_complete'; })[0].props;
+    ok('deterministic raw score', sc.raw === expectRaw, 'raw=' + sc.raw + ' expected=' + expectRaw);
+    if (mode === 'skipall') {
+      ok('insufficient answers → no band shown', /not enough answers/i.test(D.getElementById('h-result').textContent) && D.getElementById('res-stats').innerHTML === '' && names().indexOf('result_insufficient') >= 0);
+      var errsS = results.filter(function (r) { return r.indexOf('FAIL') === 0; }).length;
+      results.push((errsS ? 'RESULT: ' + errsS + ' FAILED' : 'RESULT: ALL PASSED') + ' — ' + file + ' / ' + mode);
+      document.getElementById('out').textContent = results.join('\n'); return;
+    }
+    var gate = W.CONFIG.gate;
+    var hr = D.getElementById('h-result').textContent;
+    if (gate === 'gate') {
+      ok('gate screen shows how many correct, not the range', /answered \d+ of \d+ correctly/i.test(hr) && !/range/i.test(hr), hr);
+      ok('gate screen shows the full count line', /\d+ correct · \d+ incorrect/.test(D.getElementById('res-range').textContent), D.getElementById('res-range').textContent);
+      ok('no range, rank or curve rendered before the account', D.getElementById('res-stats').innerHTML === '' && D.getElementById('curve').innerHTML === '' && D.getElementById('res-details-iq').hidden === true);
+      ok('no blurred or hidden values in the DOM', !D.querySelector('.blur') && D.getElementById('s-result').textContent.indexOf('top ~') < 0);
+      ok('by-area breakdown available but collapsed before the account', D.getElementById('res-details-profile').hidden === false && D.getElementById('res-details-profile').open === false);
+      ok('one sample explanation (Q1) available but collapsed before the account', D.getElementById('res-details-sample').hidden === false && D.getElementById('res-details-sample').open === false && D.getElementById('res-sample').textContent.indexOf('Q1') >= 0);
+      ok('sample explanation is only Q1, not the whole review', D.getElementById('res-sample').textContent.indexOf('Q2') < 0 && D.getElementById('res-review-wrap').hidden === true);
+      ok('result_teaser_view logged (mode gate, revealed raw/sample/by_area)', ev().some(function (e) { return e.name === 'result_teaser_view' && e.props.mode === 'gate' && String(e.props.revealed) === 'raw,sample,by_area'; }));
+    } else if (gate === 'score-first') {
+      ok('range shown before signup (Test 1 arm)', /range/i.test(hr), hr);
+      ok('rank shown before signup', /rank/i.test(D.getElementById('res-stats').textContent));
+      ok('curve carries the illustrative caption', /not a measured distribution/i.test(D.getElementById('curve').textContent));
+      ok('answer review hidden before signup', D.getElementById('res-review-wrap').hidden === true);
+      ok('IQ note collapsed below the CTA', D.getElementById('res-details-iq').hidden === false && D.getElementById('res-details-iq').open === false);
+      ok('result_teaser_view logged (mode score-first, revealed raw/band/rank/by_area/why_range)', ev().some(function (e) { return e.name === 'result_teaser_view' && e.props.mode === 'score-first' && String(e.props.revealed) === 'raw,band,rank,by_area,why_range'; }));
+    }
+    if (gate !== 'pre-quiz') ok('account CTA present', !!D.getElementById('btn-unlock'));
+    if (mode === 'nostorage' && gate !== 'pre-quiz') ok('blocked storage: "tab only" line and storage_unavailable on the teaser, before the account', visible('res-storage') && /tab only/i.test(D.getElementById('res-storage').textContent) && names().indexOf('storage_unavailable') >= 0);
+    if (gate !== 'pre-quiz') {
+      D.getElementById('btn-unlock').click(); await sleep(120);
+      ok('signup visible', visible('s-signup'));
+      ok('signup_view logged', names().indexOf('signup_view') >= 0);
+      if (stop === 'signup-error') { D.getElementById('email').value = 'not-an-email'; D.getElementById('su-form').dispatchEvent(new W.Event('submit', { cancelable: true })); await sleep(60); stopAt('signup-error'); }
+      stopAt('signup');
+      var em = D.getElementById('email');
+      em.value = 'not-an-email'; em.dispatchEvent(new W.Event('input'));
+      D.getElementById('su-form').dispatchEvent(new W.Event('submit', { cancelable: true })); await sleep(60);
+      ok('invalid email shows error', D.getElementById('email-err').textContent.length > 10 && em.getAttribute('aria-invalid') === 'true');
+      ok('invalid email keeps input', em.value === 'not-an-email');
+      ok('signup_error logged', names().indexOf('signup_error') >= 0);
+      ok('no signup_complete yet', names().indexOf('signup_complete') < 0);
+      em.value = 'person@example.com'; em.dispatchEvent(new W.Event('input'));
+      D.getElementById('su-form').dispatchEvent(new W.Event('submit', { cancelable: true }));
+      D.getElementById('su-form').dispatchEvent(new W.Event('submit', { cancelable: true })); // duplicate submit
+      await sleep(800);
+      ok('signup_complete logged exactly once after duplicate submit', names().filter(function (n) { return n === 'signup_complete'; }).length === 1);
+      ok('email not in event props', JSON.stringify(ev()).indexOf('person@example.com') < 0);
+      if (mode === 'nostorage') ok('blocked storage: account kept in memory only, not in localStorage', W.IQLY_ACCOUNT() && W.IQLY_ACCOUNT().persisted === false && W.localStorage.getItem('iqly.' + W.CONFIG.variant + '.account') === null);
+      else ok('account stored locally, verified by read-back, marked simulated', (function () { var a = JSON.parse(W.localStorage.getItem('iqly.' + W.CONFIG.variant + '.account')); return a && a.simulated === true && a.persisted === true && a.email === 'person@example.com'; })());
+      ok('full result visible after signup', visible('s-result') && /range/i.test(D.getElementById('h-result').textContent) && D.getElementById('res-review-wrap').hidden === false && D.querySelectorAll('#res-review li').length === N);
+      ok('answer review marks match score', D.querySelectorAll('#res-review .mark:not(.no)').length === expectRaw, 'marks=' + D.querySelectorAll('#res-review .mark:not(.no)').length);
+      ok('result_view logged with revealed raw/band/rank/review/history', ev().some(function (e) { return e.name === 'result_view' && String(e.props.revealed) === 'raw,band,rank,review,history'; }));
+      stopAt('full');
+    } else {
+      ok('pre-quiz gate: full result directly', visible('s-result') && names().indexOf('signup_complete') >= 0 && D.getElementById('res-review-wrap').hidden === false);
+      ok('result_view logged with revealed raw/band/rank/review/history', ev().some(function (e) { return e.name === 'result_view' && String(e.props.revealed) === 'raw,band,rank,review,history'; }));
+    }
+    ok('attempt history kept (1 attempt after the first completion)', D.getElementById('res-details-history').hidden === false && D.querySelectorAll('#res-history li').length === 1 && /\(1\)/.test(D.getElementById('res-history-sum').textContent));
+    ok('band follows the documented rule for ' + expectRaw + '/' + N, D.getElementById('h-result').textContent === expectBand(expectRaw, N), D.getElementById('h-result').textContent);
+    ok('attempt is 1 on every event of a first run', ev().length > 0 && ev().every(function (e) { return e.attempt === 1; }) && st().attempt === 1);
+    if (mode === 'nostorage') {
+      ok('blocked storage: honest "kept for this tab only" line shown', D.getElementById('res-storage').hidden === false && /tab only/i.test(D.getElementById('res-storage').textContent));
+      ok('blocked storage: storage_unavailable logged', names().indexOf('storage_unavailable') >= 0);
+      ok('blocked storage: signup_complete marked not persisted', ev().some(function (e) { return e.name === 'signup_complete' && e.props.persisted === false; }));
+      var errsN = results.filter(function (r) { return r.indexOf('FAIL') === 0; }).length;
+      results.push((errsN ? 'RESULT: ' + errsN + ' FAILED' : 'RESULT: ALL PASSED') + ' — ' + file + ' / ' + mode);
+      document.getElementById('out').textContent = results.join('\n'); return;
+    }
+    ok('storage line hidden when storage works', D.getElementById('res-storage').hidden === true);
+    // refresh after completion restores full result
+    await load(); await sleep(50);
+    ok('refresh after signup restores result', visible('s-result') && /range/i.test(D.getElementById('h-result').textContent));
+    ok('history survives refresh', D.querySelectorAll('#res-history li').length === 1);
+    ok('page_view on every load (' + loads + ' loads) while landing_view stays once', count('page_view') === loads && count('landing_view') === 1 && ev().filter(function (e) { return e.name === 'page_view'; }).pop().props.reload === true, 'page_view=' + count('page_view'));
+    // restart
+    var rt = D.getElementById('btn-retake') || D.getElementById('btn-retake2'); if (rt) { rt.click(); await sleep(60); ok('retake returns to Q1', visible('s-quiz') && st().q === 0 && st().answers.length === 0); }
+    if (mode === 'history') {
+      for (var j = 0; j < N; j++) { D.querySelectorAll('#opts .opt')[Q[j].key].click(); await sleep(400); }
+      await sleep(2200);
+      ok('second attempt reaches the full result (account persists)', visible('s-result') && D.getElementById('res-review-wrap').hidden === false);
+      ok('history lists 2 attempts after a retake', D.querySelectorAll('#res-history li').length === 2 && /\(2\)/.test(D.getElementById('res-history-sum').textContent), 'rows=' + D.querySelectorAll('#res-history li').length);
+      ok('attempt counter: every question_view of the retake carries attempt 2', st().attempt === 2 && ev().filter(function (e) { return e.name === 'question_view' && e.attempt === 2; }).length === N && ev().filter(function (e) { return e.name === 'quiz_restart'; })[0].attempt === 1, 'attempt=' + st().attempt);
+      ok('latest attempt shows the new score', /12\/12|8\/8/.test(D.querySelector('#res-history li .hb').textContent), D.querySelector('#res-history li .hb').textContent);
+      ok('no second signup_complete on retake', names().filter(function (n) { return n === 'signup_complete'; }).length === 1);
+      D.getElementById('res-details-history').open = true; await sleep(30);
+      ok('history_view logged on open', names().indexOf('history_view') >= 0);
+      // delete: a real control on the full result. Headless Chrome's confirm() returns false, so stub it before clicking.
+      ok('delete control present on the full result', !!D.getElementById('btn-delete'));
+      W.confirm = function () { return true; };
+      var sidBefore = st().sid, NSV = 'iqly.' + W.CONFIG.variant + '.', afterReload = reloaded();
+      D.getElementById('btn-delete').click();
+      // synchronous, before the reload commits: the in-memory log has the event and storage is already empty
+      ok('account_deleted logged and every iqly key removed before the reload', names().indexOf('account_deleted') >= 0 && Object.keys(W.localStorage).filter(function (k) { return k.indexOf(NSV) === 0; }).length === 0);
+      await afterReload;
+      ok('after delete: clean landing with the notice, new session, no account', visible('s-landing') && visible('landing-deleted') && st().sid !== sidBefore && W.IQLY_ACCOUNT() === null && W.localStorage.getItem(NSV + 'account') === null && W.localStorage.getItem(NSV + 'history') === null);
+      ok('after delete: once-flags reset (landing_view again), page_view reload:false, hash cleared', count('landing_view') === 1 && count('page_view') === 1 && ev()[0].props.reload === false && !/#deleted/.test(W.location.href), 'href=' + W.location.href.slice(-30));
+    }
+    var errs = results.filter(function (r) { return r.indexOf('FAIL') === 0; }).length;
+    results.push((errs ? 'RESULT: ' + errs + ' FAILED' : 'RESULT: ALL PASSED') + ' — ' + file + ' / ' + mode);
+  } catch (e) { if (e && e.halt) return; results.push('FAIL harness exception: ' + (e && e.stack || e)); }
+  document.getElementById('out').textContent = results.join('\n');
+})();
+</script>
+</body></html>

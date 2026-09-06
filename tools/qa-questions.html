@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IQly question bank QA</title>
+<style>
+  body { font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 16px; color: #1b1b2f; background: #fafafa; }
+  .q { max-width: 420px; margin: 0 auto 32px; padding: 16px; background: #fff; border: 1px solid #e3e3ea; border-radius: 14px; }
+  .meta { font-size: 12px; color: #666; margin-bottom: 8px; }
+  .prompt { font-size: 17px; font-weight: 600; line-height: 1.35; margin: 0 0 12px; }
+  .stim svg { width: 100%; max-width: 330px; height: auto; display: block; margin: 0 auto 12px; }
+  .stim .series { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .term { min-width: 44px; padding: 10px 8px; text-align: center; font-size: 22px; font-weight: 700; border: 1px solid #ddd; border-radius: 10px; }
+  .term-q { color: #7b4dff; border-color: #7b4dff; }
+  .opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .opts.text { grid-template-columns: minmax(0, 1fr); }
+  .opt { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 56px; border: 2px solid #d9d9e3; border-radius: 12px; background: #fff; padding: 8px; font-size: 16px; text-align: left; }
+  .opt svg { width: 100%; max-width: 88px; min-width: 0; height: auto; aspect-ratio: 1 / 1; }
+  .opt.key { border-color: #16a34a; background: #f0fdf4; }
+  .opt .n { font-size: 11px; color: #888; margin-right: 6px; }
+  .why { font-size: 12px; color: #555; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1 style="font-size:18px;max-width:420px;margin:0 auto 16px;">IQly question bank — render QA (key highlighted)</h1>
+<div id="root"></div>
+<script src="questions.js"></script>
+<script src="render.js"></script>
+<script>
+(function () {
+  var root = document.getElementById('root');
+  IQLY_QUESTIONS.forEach(function (q, qi) {
+    var el = document.createElement('section');
+    el.className = 'q';
+    var h = '<div class="meta">' + (qi + 1) + '/12 · ' + q.id + ' · ' + q.cat + ' · tier ' + q.tier + ' · key=' + (q.key + 1) + '</div>';
+    h += '<p class="prompt">' + q.prompt + '</p>';
+    h += '<div class="stim">' + IQLY_RENDER.stimulus(q) + '</div>';
+    var isText = q.stim.type === 'text' || q.stim.type === 'series';
+    h += '<div class="opts' + (isText ? ' text' : '') + '">';
+    q.options.forEach(function (o, i) {
+      var r = IQLY_RENDER.option(q, o);
+      h += '<div class="opt' + (i === q.key ? ' key' : '') + '" aria-label="' + IQLY_RENDER.optionLabel(q, o, i) + '"><span class="n">' + (i + 1) + '</span>' + r.html + '</div>';
+    });
+    h += '</div><div class="why">' + q.why + '</div>';
+    el.innerHTML = h;
+    root.appendChild(el);
+  });
+})();
+</script>
+</body>
+</html>

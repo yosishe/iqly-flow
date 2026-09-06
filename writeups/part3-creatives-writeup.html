@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>IQly — Part 3 write-up: three creatives</title>
+<style>
+@page{size:A4;margin:6.5mm 11mm}
+body{font:8.8pt/1.28 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1c2331;margin:0}
+.hdr{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #e6dfd0;padding-bottom:4pt;margin-bottom:7pt}
+.brand{font:700 14pt/1 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+.brand b{background:#ffd23f;padding:0 3px;border-radius:2px}
+.part{font-size:8.5pt;letter-spacing:.08em;text-transform:uppercase;color:#7a8190;font-weight:600}
+h1{font:600 15pt/1.15 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;margin:0 0 2pt}
+.sub{color:#4a5160;margin:0 0 5pt;font-size:8.4pt}
+h2{font:700 9.8pt/1.25 inherit;margin:6pt 0 2pt}
+h2 span{color:#4a5160;font-weight:500;font-size:8.4pt}
+p{margin:0 0 3.5pt}
+.kpi{background:#f6f2ea;border-left:3px solid #ffd23f;padding:4.5pt 8pt;margin:4pt 0 5pt;font-size:8.8pt}
+table{border-collapse:collapse;width:100%;font-size:8.4pt;margin:4pt 0 5pt}
+td,th{border-bottom:1px solid #e6dfd0;padding:2.5pt 4pt;text-align:left;vertical-align:top}
+th{color:#4a5160;font-weight:600}
+.foot{font-size:8pt;color:#4a5160;border-top:1px solid #e6dfd0;padding-top:2pt;margin-top:3pt}
+</style></head>
+<body>
+<div class="hdr"><span class="brand">IQ<b>ly</b></span><span class="part">Part 3 of 3 · Three creatives</span></div>
+<h1>Earning the right click, not the most clicks</h1>
+<p class="sub">Files: <b>ad-320x50.png</b> (+ @2x for high-DPR slots), <b>ad-250x250.png</b>, <b>ad-1080x1920.png</b>, with the HTML sources they were exported from and <b>message-match.md</b>. Static, no external assets, visible border on light backgrounds (AdX rule), all under 100 KB.</p>
+
+<div class="kpi"><b>Objective.</b> Accounts per impression = CTR × post-click Account CVR, and CPA = spend ÷ accounts, with accounts attributed on click-through only (view-through credit inflates display CPA) and viewability, invalid-traffic share and frequency as guardrails, because in display a CPA win can be a placement-quality artefact; clicks also exceed landing views (abandonment before load, invalid clicks), so the identity is approximate. Part 3 scales beyond Search into programmatic display, where intent is colder, so the creative's job is to <b>qualify</b> the click for people who will finish 12 questions and create the free account, and to promise exactly what the entry screen delivers. The category's incumbent script ("Are you smarter than the average American? The average IQ is 98… Certified IQ Test") belongs to the subscription traps that Which?, BBB and TINA.org document, so none of its vocabulary is borrowed. One concept carries all three sizes: <b>a real question from the test, labelled "Sample · Q1 of 12", plus the honest promise "Free IQ test · 12 questions · ~5 min · no payment"</b>, in the landing page's own colours and type so the click lands on a page that looks like the ad. The promise says "no payment" and never "free score" or "instant results", because in the control the range is shown after the free account; a claim the entry screen cannot keep is an unavailable offer under Google's Misrepresentation policy and a bait-and-switch in the user's eyes. "~5 min" is an estimate until measured.</div>
+
+<h2>320 × 50 — mobile banner <span>· logo · "Free IQ test" · "12 questions · ~5 min · no payment" · "Start"</span></h2>
+<p>At this size a puzzle is unreadable and text below about 14 px CSS is hard to read on a phone, so the banner carries only the promise and the qualification: three concrete facts that filter for people willing to spend five minutes, and the one word users actually fear, payment, taken off the table. Exported at 1× (exact 320×50) and 2× (640×100) because a 1× asset blurs on high-DPR phones. This size is known to inflate CTR with mis-taps, so it is judged on post-click account rate, never on CTR. It repeats the landing's eyebrow line and adds "no payment", which the landing's block carries; the account boundary it has no room for is the first block the visitor reads under the headline, before question one.</p>
+
+<h2>250 × 250 — square <span>· "Which tile completes the grid?" · the real Question 1 matrix with a "?" tile · facts · "Start the test"</span></h2>
+<p>Puzzle-in-ad is the hook this category runs on: [COMPETITOR OBSERVATION] intelligence framing and puzzle-first visuals recur across the IQ and puzzle creatives sampled in the Google Ads Transparency Center and the Meta Ad Library; causal impact on accounts is unknown, and no vendor percentage is quoted because none comes with a methodology. It is honest here because the tile <i>is</i> question 1 of the test; the user meets the same grid two taps later, and the gate screen's sample explanation later shows exactly how it is solved. Two policy lines shaped it: Google's misleading-ad-design rule bans fake answer buttons in static images, so the ad shows the stimulus with a "Sample · Q1 of 12" label and no clickable-looking options; Meta's personal-attributes rule bans implying the viewer's intelligence, so there is no "Are you smart enough?", only the question. 250×250 is a low-supply size (Google Ad Manager calls its supply "generally limited"); the same composition also fits a 300×250 slot.</p>
+
+<h2>1080 × 1920 — full-screen vertical <span>· logo · "Free IQ test · Sample question 1 of 12" · the grid · 12 questions / ~5 minutes / 4 reasoning areas · "Start the free test" · boundary line</span></h2>
+<p>The interstitial has room to carry the whole entry-screen promise, so it does: the sample item, the three facts, the CTA, and the one sentence that prevents the post-click surprise, "Free to take, no payment, ever. A free account (email only, no password) shows your IQ range and rank." Key elements sit inside the safe area that Meta's Stories guidance recommends (roughly the top 14% and bottom 35% left clear for platform chrome, which also keeps them away from the close button AdX draws on interstitials). It deliberately avoids the category's bell curve with the viewer's marker pre-placed high, which implies a result and violates the personal-attributes rule. This is the creative most likely to produce accounts per impression rather than curiosity clicks, because the person who taps it already knows there is an account step and what it shows; that sentence costs some raw CTR on purpose, and it is the first thing I would hold out: with and without the boundary sentence, keeping the version with it unless the 95% interval on accounts per impression lies below the other's, with invalid-traffic share as the guardrail. The three creatives promote the control; Tests 2 and 3 change the promise (question count; account first) and would run with their own copy.</p>
+
+<table>
+<tr><th>Creative</th><th>What it promises</th><th>Entry screen delivers</th><th>Result delivers</th></tr>
+<tr><td>320×50</td><td>Free IQ test · 12 questions · ~5 min · no payment</td><td>Eyebrow "Free IQ test · 12 questions · ~5 min"; the free/account block is the first thing under the headline</td><td>Full count line free; range, rank, review and history after the free email account</td></tr>
+<tr><td>250×250</td><td>The above + question 1 as a labelled sample</td><td>Same, and question 1 is the same grid</td><td>Same, plus Q1's explanation shown on the gate screen</td></tr>
+<tr><td>1080×1920</td><td>The above + "Free to take, no payment, ever. A free account (email only, no password) shows your IQ range and rank."</td><td>Block: "Free, no payment: all 12 questions, and how many you got right. Free account (email only, no password): shows your IQ range and rank, and saves them with the answer review."</td><td>Same</td></tr>
+</table>
+
+<p><b>Rejected:</b> "No signup" (an account exists), "Free score" and "Instant results" (true only after the account; also the category's scam phrases), "Scientifically accurate/Certified", "Only 1% can solve this", any statistic about Einstein, countdowns, and any implied result for the viewer. <b>Where AI helped:</b> Claude Code researched current IQ-test ads in the Google Ads Transparency Center and Meta Ad Library, collected the exact policy language, built and exported the creatives at exact pixel sizes and produced the message-match matrix; the concept choice, the promise line and the rejection list were my calls.</p>
+
+<p class="foot">Labels: [EVIDENCE] · [COMPETITOR OBSERVATION] · [INFERENCE] · [HYPOTHESIS]. No CTR or conversion benchmark is quoted.</p>
+</body></html>
