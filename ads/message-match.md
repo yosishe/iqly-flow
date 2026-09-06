@@ -7,8 +7,8 @@ Every promise a creative makes must be delivered word for word on the entry scre
 | Brand | IQly | IQly | IQly | IQly | — |
 | Promise | "Free IQ test" | "Free IQ test" | "Free IQ test · Sample question 1 of 12" | Eyebrow "Free IQ test · 12 questions · ~5 min" | Landing H1 "Find out your IQ range and where you rank." |
 | Effort | "12 questions · ~5 min" | "12 questions · ~5 min" | 12 / ~5 / 4 fact tiles | 12 / ~5 / 4 fact tiles | Quiz header "Question 1 of 12", no timer |
-| Price | "no payment" | "no payment, ever" | "Free to take, no payment, ever." | Block "Free, no payment" + small print "No payment, ever." | Signup: no payment field; "No payment, ever." on the account card |
-| Account boundary | — (no room; the landing discloses before question 1) | — | "A free account (email only, no password) shows your IQ range and rank." | Block "Free account (email only, no password): shows your IQ range and rank, and saves them with the answer review." | Gate screen card lists the same four items; full result shows range, rank, review |
+| Price | "no payment" | "no payment, ever" | "Free to take, no payment, ever." | Block "Free, no payment" + small print "No payment, ever." | Signup: no payment field; gate card "No payment, ever — not a trial, not a card." |
+| Account boundary | — (no room; the landing discloses before question 1) | — | "A free account (email only, no password, no payment) shows your IQ range and rank. Not a clinical IQ assessment." | Block "Free account (email only, no password, no payment): IQ range and rank, full answer review (what you missed and why), attempt history if you retake, and delete anytime in this browser." | Gate card lists range, rank, full review, attempt history, delete control; full result shows range, rank, review |
 | Sample item | — | Question 1 grid (real item, labelled "Sample · Q1 of 12", no clickable-looking options) | Question 1 grid | — | Question 1 is the same grid |
 | CTA | "Start" | "Start the test" | "Start the free test" | "Start the test" | — |
 
