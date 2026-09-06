@@ -601,6 +601,25 @@ var K = { state: NS + 'state', events: NS + 'events', account: NS + 'account', h
 var NOSTORAGE = /[?&]nostorage=1/.test(location.search);   /* QA hook: simulate a browser that blocks storage */
 var storageFailed = false;
 
+/* ---------- pre-registered segments: device and keyword (Google Ads ValueTrack `dev={device}` / `kw={keyword}` when present) ---------- */
+function param(name) {
+  var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+  if (!m) return '';
+  try { return decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (e) { return ''; }
+}
+/* keyword: lower-cased, spaces to hyphens, allow-listed characters only, max 40; anything else (including injected markup) is dropped, never stored */
+function cleanKw(v) {
+  v = String(v || '').toLowerCase().replace(/[\s+]+/g, '-').replace(/^-+|-+$/g, '');
+  return /^[a-z0-9-]{1,40}$/.test(v) ? v : undefined;
+}
+/* device: the ad platform's value (m/t/c) wins; otherwise a client proxy (coarse pointer or a narrow viewport), declared as a proxy in the measurement spec */
+function detectDev() {
+  var fromAd = { m: 'mobile', t: 'tablet', c: 'desktop' }[param('dev')];
+  if (fromAd) return fromAd;
+  var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  return (coarse || window.innerWidth < 768) ? 'mobile' : 'desktop';
+}
+
 function lsGet(k, d) { try { if (NOSTORAGE) return d; var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) {
   /* Writes are verified by reading back; a failed or unverifiable write is remembered so the UI never claims "saved" falsely. */
@@ -634,6 +653,9 @@ var fresh = !state;
 if (!state) {
   state = { sid: uid(), variant: CONFIG.variant, screen: 'LANDING', q: 0, answers: [], startedAt: null, completedAt: null, created: Date.now() };
 }
+/* segments are first-touch: set once when the state is created (or backfilled for a state from an older build), never overwritten by a later visit */
+if (!state.dev) state.dev = detectDev();
+if (!state.kw) { var kw0 = cleanKw(param('kw') || param('utm_term')); if (kw0) state.kw = kw0; }
 var account = lsGet(K.account, null);
 var events = lsGet(K.events, []);
 var history = lsGet(K.history, []);
@@ -647,7 +669,7 @@ function save() { lsSet(K.state, state); }
 var ONCE = { landing_view:1, landing_disclosure_view:1, quiz_start:1, quiz_25:1, quiz_50:1, quiz_75:1, quiz_complete:1, scoring_view:1, scoring_complete:1, result_teaser_view:1, signup_view:1, signup_start:1, signup_complete:1, result_view:1, resume_restored:1, history_view:1, storage_unavailable:1 };
 function track(name, props) {
   if (ONCE[name]) { if (onceFired[name]) return; onceFired[name] = true; lsSet(K.once, onceFired); }
-  var e = { name: name, t: Date.now(), sid: state.sid, variant: CONFIG.variant, screen: state.screen, props: props || {}, once: !!ONCE[name] };
+  var e = { name: name, t: Date.now(), sid: state.sid, variant: CONFIG.variant, screen: state.screen, dev: state.dev, kw: state.kw, props: props || {}, once: !!ONCE[name] };
   events.push(e);
   if (events.length > 500) events = events.slice(-500);
   lsSet(K.events, events);
@@ -1009,7 +1031,7 @@ $('brand').addEventListener('click', function (e) { e.preventDefault(); go('LAND
 var DEBUG = /[?&]debug=1/.test(location.search);
 function dbgRender() {
   if (!DEBUG) return;
-  $('dbg-variant').textContent = CONFIG.variant + ' · gate=' + CONFIG.gate + ' · disclosure=' + CONFIG.disclosure + ' · n=' + N;
+  $('dbg-variant').textContent = CONFIG.variant + ' · gate=' + CONFIG.gate + ' · disclosure=' + CONFIG.disclosure + ' · n=' + N + ' · dev=' + state.dev + (state.kw ? ' · kw=' + state.kw : '');
   $('dbg-screen').textContent = state.screen; $('dbg-q').textContent = (state.q + 1) + '/' + N; $('dbg-sid').textContent = state.sid;
   $('dbg-state').textContent = JSON.stringify({ answers: state.answers, startedAt: state.startedAt, completedAt: state.completedAt, account: account ? { email: '(set)', createdAt: account.createdAt, simulated: true, durable: account.durable } : null, attempts: history.length, storageFailed: storageFailed });
   try { $('dbg-score').textContent = JSON.stringify(score(), null, 1); } catch (e) { $('dbg-score').textContent = String(e); }
