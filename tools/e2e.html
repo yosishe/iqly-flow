@@ -173,6 +173,14 @@ function expectBand(raw, n) { var p = raw / n; return p >= 0.85 ? 'Well above av
     }
     ok('attempt history kept (1 attempt after the first completion)', D.getElementById('res-details-history').hidden === false && D.querySelectorAll('#res-history li').length === 1 && /\(1\)/.test(D.getElementById('res-history-sum').textContent));
     ok('band follows the documented rule for ' + expectRaw + '/' + N, D.getElementById('h-result').textContent === expectBand(expectRaw, N), D.getElementById('h-result').textContent);
+    /* monotonicity: the band rule and its labels live inside the app's closure, so re-parse them from the shipped page source and check every raw score: adding a correct answer never lowers the band, and the shipped rule equals the restated one at every point */
+    ok('band rule monotonic and equal to the restated rule at every raw score 0..' + N, (function () {
+      var src = D.documentElement.outerHTML, fm = /function bandIndex\(pct\)\s*\{\s*return ([^}]*);\s*\}/.exec(src), lm = /var BANDS = \[([\s\S]*?)\];/.exec(src);
+      if (!fm || !lm) return false;
+      var bandIdx = new Function('pct', 'return ' + fm[1] + ';'), labels = (lm[1].match(/label: '([^']+)'/g) || []).map(function (x) { return x.slice(8, -1); }), prev = -1;
+      for (var r = 0; r <= N; r++) { var b = bandIdx(r / N); if (b < prev || labels[b] !== expectBand(r, N)) return false; prev = b; }
+      return labels.length === 4;
+    })());
     ok('attempt is 1 on every event of a first run', ev().length > 0 && ev().every(function (e) { return e.attempt === 1; }) && st().attempt === 1);
     if (mode === 'nostorage') {
       ok('blocked storage: honest "kept for this tab only" line shown', D.getElementById('res-storage').hidden === false && /tab only/i.test(D.getElementById('res-storage').textContent));

@@ -1,0 +1,6 @@
+submission/
+local/
+.iqly-stage/
+__pycache__/
+*.pyc
+.DS_Store

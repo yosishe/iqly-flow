@@ -1,14 +1,15 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Usage: tools/shot.sh <html file (relative to tools/ or absolute)> <width> <height> <out.png>
 # Renders the page at an exact CSS width via frame.html in headless Chrome and crops the screenshot.
 set -e
 SRC="$1"; W="${2:-375}"; H="${3:-6000}"; OUT="${4:-shot.png}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"   # override with CHROME=/path/to/chrome (e.g. Chromium on Linux); CHROME_FLAGS adds flags such as --no-sandbox
+CHROME_FLAGS="${CHROME_FLAGS:-}"
 case "$SRC" in /*) SRCURL="file://$SRC";; *) SRCURL="$SRC";; esac
 WIN=$(( W + 40 )); [ $WIN -lt 520 ] && WIN=520
-TMP="$(mktemp -t shot).png"
-"$CHROME" --headless=new --disable-gpu --hide-scrollbars --window-size=${WIN},${H} \
+TMP="$(mktemp "${TMPDIR:-/tmp}/shot.XXXXXX").png"
+"$CHROME" $CHROME_FLAGS --headless=new --disable-gpu --hide-scrollbars --window-size=${WIN},${H} \
   --screenshot="$TMP" "file://$DIR/frame.html?src=${SRCURL}&w=${W}&h=${H}" >/dev/null 2>&1
 python3 - "$TMP" "$OUT" "$W" "$H" <<'EOF'
 import sys
