@@ -1,11 +1,12 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # Export the three HTML creatives to PNG at their exact pixel dimensions (plus a 2× version of the 320×50 for high-DPR slots).
-DIR="$(cd "$(dirname "$0")" && pwd)"; ADS="$DIR/../submission/ads"
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+DIR="$(cd "$(dirname "$0")" && pwd)"; ADS="${ADS:-$DIR/../submission/ads}"; [ -d "$ADS" ] || ADS="$DIR/../ads"   # public package layout: ads/ at the root
+CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"   # override with CHROME=/path/to/chrome (e.g. Chromium on Linux); CHROME_FLAGS adds flags such as --no-sandbox
+CHROME_FLAGS="${CHROME_FLAGS:-}"
 export_ad () { # file w h scale out
-  local f=$1 w=$2 h=$3 s=$4 out=$5 tmp="$(mktemp -t ad).png"
+  local f=$1 w=$2 h=$3 s=$4 out=$5 tmp="$(mktemp "${TMPDIR:-/tmp}/ad.XXXXXX").png"
   local win_w=$(( w > 520 ? w : 520 )) win_h=$(( h > 200 ? h : 200 ))
-  "$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=$s --window-size=${win_w},${win_h} --screenshot="$tmp" "file://$ADS/$f" >/dev/null 2>&1
+  "$CHROME" $CHROME_FLAGS --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=$s --window-size=${win_w},${win_h} --screenshot="$tmp" "file://$ADS/$f" >/dev/null 2>&1
   python3 - "$tmp" "$out" $w $h $s <<'EOF'
 import sys; from PIL import Image
 src,out,w,h,s=sys.argv[1],sys.argv[2],int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5])

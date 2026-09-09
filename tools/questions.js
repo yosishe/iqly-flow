@@ -1,4 +1,4 @@
-/* IQly question bank — v2 (2026-09-03), revised after blind adversarial review (see dossier/08-question-bank-review.md).
+/* IQly question bank — v2 (2026-09-03), revised after a blind adversarial review (authoring notes, not shipped).
    Original items, no copyrighted material. 12 items, 4 categories × 3, difficulty tiers 1→3, interleaved.
    Every item: exactly one keyed answer; `why` documents the rule for review and is STRIPPED from the shipped file.
    `alt` is a neutral description for assistive tech and must never state the rule.

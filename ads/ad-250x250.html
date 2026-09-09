@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>IQly ad 250×250</title>
 <style>
-/* 250×250 square. Puzzle-in-ad: a REAL item from the test (question 1), shown as a sample — no fake answer buttons. */
+/* 250×250 square. Puzzle-in-ad: a REAL item from the test (question 1), shown as a sample — no fake answer buttons.
+   v5: the footer line is "~5 min · no payment" at 10.5 px so that it fits the column at every font the stack can resolve to (the earlier "no payment, ever" at 11 px clipped in the exported PNG). */
 html,body{margin:0;background:#fff}
-.ad{position:relative;width:250px;height:250px;box-sizing:border-box;background:#f6f2ea;border:1px solid #d9d2c3;padding:12px 14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1c2331;display:flex;flex-direction:column;overflow:hidden}
+.ad{position:relative;width:250px;height:250px;box-sizing:border-box;background:#f6f2ea;border:1px solid #d9d2c3;padding:12px 14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Liberation Sans",sans-serif;color:#1c2331;display:flex;flex-direction:column;overflow:hidden}
 .top{display:flex;justify-content:space-between;align-items:baseline}
 .logo{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:700;font-size:20px;line-height:1}
 .logo b{background:#ffd23f;padding:0 3px;border-radius:2px}
 .tag{font-size:10px;color:#7a8190;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
-.h{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:19px;font-weight:600;line-height:1.15;margin:8px 0 6px}
+.h{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:19px;font-weight:600;line-height:1.15;margin:6px 0 4px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:118px;margin:0 auto}
 .grid svg{width:100%;height:auto;display:block;background:#fff;border-radius:4px}
 .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.s{font-size:11px;color:#4a5160;line-height:1.2}
+.s{font-size:10.5px;color:#4a5160;line-height:1.2}
 .cta{flex:none;background:#1c2331;color:#f6f2ea;font-size:13px;font-weight:700;padding:9px 12px;border-radius:6px}
 </style></head>
 <body><div class="ad" role="img" aria-label="IQly free IQ test. Sample question 1 of 12: which tile completes the grid? 12 questions, about 5 minutes, no payment, ever. Not a clinical IQ assessment. Start the test.">
@@ -29,5 +30,5 @@ html,body{margin:0;background:#fff}
     <svg viewBox="0 0 100 100"><polygon points="35,37 48,63 22,63" fill="#1c2331"/><polygon points="65,37 78,63 52,63" fill="#1c2331"/></svg>
     <svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#ffd23f"/><text x="50" y="66" text-anchor="middle" font-size="44" font-weight="700" fill="#1c2331" font-family="Georgia,serif">?</text></svg>
   </div>
-  <div class="foot"><div class="s">Free IQ test · 12 questions<br>~5 min · no payment, ever</div><div class="cta">Start the test</div></div>
+  <div class="foot"><div class="s">Free IQ test · 12 questions<br>~5 min · no payment</div><div class="cta">Start the test</div></div>
 </div></body></html>
