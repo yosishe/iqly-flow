@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><title>IQly ad 250×250</title>
 <style>
 /* 250×250 square. Puzzle-in-ad: a REAL item from the test (question 1), shown as a sample — no fake answer buttons.
-   v5: the footer line is "~5 min · no payment" at 10.5 px so that it fits the column at every font the stack can resolve to (the earlier "no payment, ever" at 11 px clipped in the exported PNG). */
+   v5: the footer line is "~5 min · no payment" at 10.5 px. v5.1: the 10.5 px change alone was not enough -- "Free IQ test · 12 questions" still wrapped to two lines in the 119 px column, so the block ran to 255.1 px on a 250 px canvas and "payment" was clipped by overflow:hidden. The grid is 106 px and the button slightly tighter so the whole promise renders; every word of the copy is unchanged. Checked by measuring every element bottom against 250 px, not by eye. */
 html,body{margin:0;background:#fff}
 .ad{position:relative;width:250px;height:250px;box-sizing:border-box;background:#f6f2ea;border:1px solid #d9d2c3;padding:12px 14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Liberation Sans",sans-serif;color:#1c2331;display:flex;flex-direction:column;overflow:hidden}
 .top{display:flex;justify-content:space-between;align-items:baseline}
@@ -10,11 +10,11 @@ html,body{margin:0;background:#fff}
 .logo b{background:#ffd23f;padding:0 3px;border-radius:2px}
 .tag{font-size:10px;color:#7a8190;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
 .h{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:19px;font-weight:600;line-height:1.15;margin:6px 0 4px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:118px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:106px;margin:0 auto}
 .grid svg{width:100%;height:auto;display:block;background:#fff;border-radius:4px}
-.foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
 .s{font-size:10.5px;color:#4a5160;line-height:1.2}
-.cta{flex:none;background:#1c2331;color:#f6f2ea;font-size:13px;font-weight:700;padding:9px 12px;border-radius:6px}
+.cta{flex:none;background:#1c2331;color:#f6f2ea;font-size:12.5px;font-weight:700;padding:8px 10px;border-radius:6px}
 </style></head>
 <body><div class="ad" role="img" aria-label="IQly free IQ test. Sample question 1 of 12: which tile completes the grid? 12 questions, about 5 minutes, no payment, ever. Not a clinical IQ assessment. Start the test.">
   <div class="top"><div class="logo">IQ<b>ly</b></div><div class="tag">Sample · Q1 of 12</div></div>
