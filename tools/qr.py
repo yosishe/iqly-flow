@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make a QR-code PNG for the live link once Yosi has deployed `deploy/`.
+"""Make a QR-code PNG for the live link once it is deployed.
 Usage:  python3 tools/qr.py https://your-live-link.example  [out.png]
 Needs the `qrcode` package (pure Python + Pillow):  python3 -m pip install "qrcode[pil]"
 Nothing here touches the network; the QR is generated locally."""

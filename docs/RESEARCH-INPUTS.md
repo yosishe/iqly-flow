@@ -51,7 +51,7 @@ Sunk cost as a case for a longer test (R4: paid-wall data; commitment and sunk-c
 
 - [Official IQly challenge brief](https://challenge.arpeely.com/index.html), inspected 10 September 2026: functional flow, one-page Part 1, three variants, three creative dimensions.
 - [Official submission form](https://challenge.arpeely.com/submit.html), same date: CV, delivery links/uploads and eligibility attestation. The old /submit path returned 404.
-- [Arpeely home](https://www.arpeely.com/), same date: company-described performance acquisition and work on Ace; context, not IQly results.
+- [Arpeely home](https://www.arpeely.com/), same date: company-described performance acquisition; context, not IQly results.
 - [Arpeely about](https://www.arpeely.com/about), same date: company-described engineering and experimentation background.
 - [statsmodels interval documentation](https://www.statsmodels.org/stable/generated/statsmodels.stats.proportion.confint_proportions_2indep.html): methods for comparing independent proportions; the sample-size arithmetic in the measurement spec is our own approximation.
 
