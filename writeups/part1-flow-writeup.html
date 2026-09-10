@@ -13,37 +13,27 @@ table{border-collapse:collapse;width:100%;font-size:10pt;margin:1pt 0 3pt}
 td,th{border-bottom:1px solid #e6dfd0;padding:1.5pt 4pt;text-align:left;vertical-align:top}
 th{color:#4a5160;font-weight:600}
 .foot{font-size:10pt;color:#4a5160;border-top:1px solid #e6dfd0;padding-top:2pt;margin-top:3pt}
+*{font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0}
+h1{font-family:Georgia,"Times New Roman",serif}
 </style></head>
 <body>
 <h1>IQly quiz flow — why it is built this way</h1>
-<p class="sub"><b>Part 1 of 3 — AI Quiz Flow</b> · <b>index.html</b> (control, opens offline) · live: <b>yosishe.github.io/iqly-flow</b> · <b>?debug=1</b> shows the events</p>
-<div class="skim">
-<p><b>Decision.</b> A disclosed post-quiz gate: the landing says before question one that the test is free and a free email-only account at the end shows the IQ range and rank; the gate screen shows the true count, nothing blurred.</p>
-<p><b>Metric.</b> Account creations / page visits (in production, verified accounts per eligible new visitor); every screen is justified by the funnel term it moves.</p>
-<p><b>Strongest alternative.</b> Score-first (range and rank free, the account for the review) is Test 1, its rule written in advance; a break-even, not taste, put the gate in the control.</p>
-</div>
-
-<h2>The one decision: keep the exchange, drop the deception</h2>
-<p>The category has trained "free iq test" searchers to expect a trap: 16 of the 19 live funnels in the sweep Claude Code ran and I reviewed withhold the number behind email, a trial or a subscription, and complaint corpora repeat "the test is free but the results are not". My first build showed the range free; a break-even changed my mind. The metric is accounts per visit, the brief ends the funnel "the moment they hand over an email", and the gate on the range is the screen with the largest lever on signup per finisher: at illustrative magnitudes (a 40% gate rate against 12% for "save my result") score-first must more than triple starts × completion to tie, which no evidence supports. So the control keeps the exchange and drops the deception: no payment ever, the boundary announced above the Start button, a true result before the ask, an email and nothing else.</p>
-
+<p class="sub"><b>Part 1 of 3 — AI Quiz Flow</b> · <b>index.html</b> opens offline · <b>yosishe.github.io/iqly-flow</b> · <b>?debug=1</b> shows local events</p>
+<div class="skim"><p><b>Decision.</b> A disclosed post-quiz account gate: the true correct-answer count is free; a free email-only account reveals the illustrative IQ range and rank, full review and history.</p><p><b>Metric.</b> Account creations / page visits is the brief's objective. Seven-day verified accounts per eligible new visitor is my proposed production shipping metric.</p><p><b>Strongest alternative.</b> Score-first gives the range and rank before the account. It remains Test 1 because the control is a judgment under uncertainty.</p></div>
+<h2>The decision: a visible exchange</h2>
+<p>My first control gave the range free. I changed to a disclosed gate after examining how an optional account might lose its reason to exist once the result is delivered. Historical research found several competitor architectures, but no comparable conversion data. A hypothetical 40% versus 12% account rate among finishers makes score-first require 3.33 times the upstream starts × completion to tie. That arithmetic exposes an assumption; it does not estimate either rate or prove the gate superior. I kept the exchange explicit: no payment, the account boundary before question one, and a true partial result before the ask. Whether review and history earn an email remains untested.</p>
 <h2>Flow, and the term each step targets</h2>
-<table>
-<tr><th>Step</th><th>Term</th><th>Key choice</th></tr>
-<tr><td>Landing</td><td>start</td><td>Ad promise word for word; "12 questions · ~5 min"; free/account block above the CTA, inside the first phone viewport</td></tr>
-<tr><td>12 questions</td><td>completion</td><td>One per screen, auto-advance, Back and Skip, easy → hard, 4 areas × 3, no timer</td></tr>
-<tr><td>Gate screen</td><td>signup given exposure; trust</td><td>Count line, one explanation, by-area counts one tap away; account card; CTA in the first viewport</td></tr>
-<tr><td>Signup</td><td>signup; validity</td><td>Email only, consent unticked, prototype note; storage verified by read-back</td></tr>
-<tr><td>Full result</td><td>value; return</td><td>Range, illustrative rank and curve, answer review, every attempt listed, retake, delete</td></tr>
-</table>
-
-<h2>Decisions the evidence forced</h2>
-<p><b>A range, not a number.</b> The brief says IQly "scores" IQ; I used an explicitly illustrative IQ range rather than a precise number because this unnormed prototype cannot support that precision: 12-item matrix short forms reach α ≈ .65–.73 (Bors &amp; Stokes 1998; Condon &amp; Revelle 2014), a standard error near 9 IQ points, and three items per area give α near .3 [INFERENCE for this bank], so no "Your IQ is 127" and no four-area "profile"; the rank is labelled an illustrative estimate. <b>No timer:</b> time pressure cuts matrix accuracy by about a third of a standard deviation (Gonthier 2023 [EVIDENCE]); "~5 min" is an estimate until measured. <b>The CTA is measured, not assumed:</b> landing 576 px and gate 638 px at 375×667, inside the first screen from 375 px up.</p>
-
-<h2>What is honest about the prototype</h2>
-<p>Account creation is simulated: the email is syntax-checked and kept in this browser; nothing is sent or verified, no server account exists, and the signup screen says so. Storage writes are verified by read-back; a blocked browser is told "kept for this tab only" before the account step. Every attempt is listed, "delete my account and data" works, events (32 types, the email never logged) stay local, and 32 offline end-to-end runs pass on macOS Chrome and Linux Chromium.</p>
-
-<h2>Where AI helped, and where it did not decide</h2>
-<p>Claude Code ran the research, generated the items, the state machine, the variant build with its diffs, the test and fold harnesses, reviewer passes and a pre-submission audit; it argued both sides of the gate decision and drafted the break-even. I set the constraints, reopened the gate decision with no default, checked the arithmetic and adopted the flip, chose the three bets and their rules, and vetoed every claim the evidence would not carry (DECISION-LOG.md).</p>
-
-<p class="foot">Labels: [EVIDENCE] sourced · [COMPETITOR OBSERVATION] causal impact unknown · [INFERENCE] · [HYPOTHESIS]. No conversion benchmarks; the rates above are illustrations.</p>
+<table><tr><th>Step</th><th>Target</th><th>Choice</th></tr>
+<tr><td>Landing</td><td>Start; comprehension</td><td>Ad message repeated; “12 questions · ~5 min”; disclosure before Start</td></tr>
+<tr><td>Quiz</td><td>Completion</td><td>12 tasks, 4 areas, easy-to-hard order, untimed; Back and Skip; guarded auto-advance</td></tr>
+<tr><td>Gate</td><td>Account interest</td><td>Correct/incorrect/skip counts; one explanation and area counts available; account card</td></tr>
+<tr><td>Signup</td><td>Account creation</td><td>Email only; optional marketing unticked; explicit simulation note</td></tr>
+<tr><td>Full result</td><td>Delivered value</td><td>Illustrative range/rank, answer review, local history, retake and deletion</td></tr></table>
+<h2>What the result can support</h2>
+<p>I chose a labelled range rather than a precise IQ score to represent the brief's product concept. The question bank has no measured reliability, standard error or population norms; figures from another test cannot validate it. Correct answers are counted deterministically. The range, rank and curve are explicitly illustrative mappings, and area counts are not an ability profile. Retakes can reflect practice. “~5 min” is an estimate; no timer adds pressure to these untimed tasks. Neither choice has a measured conversion advantage.</p>
+<h2>What works and what is simulated</h2>
+<p>The account syntax-checks an email and stores it locally when possible; no email is sent, ownership verified or server account created. Blocked storage is disclosed. Review, attempt history and deletion work; email sign-in and a population rank would be future services. Events exclude the typed email. Current Chrome checks cover all four flows, state recovery, zero-correct attempts and six viewport widths; physical-phone checks remain a human step.</p>
+<h2>AI and human contributions</h2>
+<p>The submission record credits Claude Code with research synthesis, question and code generation, variant diffs and initial QA; I set constraints, adopted the control reversal and selected the experiment portfolio. Codex's final audit found and corrected navigation, deletion, rendering and evidence defects that earlier passes missed. These were AI discoveries, not user-research results. The decision log records the revisions and their limits.</p>
+<p class="foot">Source of requirements: challenge.arpeely.com/index.html · Design mechanisms are hypotheses; no live conversion result is claimed.</p>
 </body></html>

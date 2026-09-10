@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Offline end-to-end tests for every built funnel file, driven by headless Chrome (no Node, no Playwright).
-# The harness loads the files from submission/ (run python3 tools/build.py first; in the public package that regenerates the same bytes as the root files).
+# The harness loads the root files directly (python3 tools/build.py regenerates them).
 # Usage: tools/e2e.sh [file ...]   (default: all four)  — prints PASS/FAIL lines per file × mode.
 DIR="$(cd "$(dirname "$0")" && pwd)"
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"   # override with CHROME=/path/to/chrome (e.g. Chromium on Linux); CHROME_FLAGS adds flags such as --no-sandbox

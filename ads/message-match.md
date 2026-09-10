@@ -1,3 +1,5 @@
+**Final render reconciliation, 10 September 2026.** All three PNGs and the optional 2× banner were exported with Chrome 152 on macOS from their accompanying HTML. The vertical's content fits internal x=72..1008, y=270..1250 margins; those margins are not universal platform certification. “No payment” remains visible in the square. A different renderer/font stack can change wrapping; these fixed PNGs are the submitted creative artifacts.
+
 # Message match: ad → landing → result
 
 Every promise a creative makes must be delivered word for word on the entry screen and kept by the result. Objective for the creatives: accounts per impression = CTR × post-click Account CVR, not CTR.

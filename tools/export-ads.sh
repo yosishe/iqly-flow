@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Export the three HTML creatives to PNG at their exact pixel dimensions (plus a 2× version of the 320×50 for high-DPR slots).
-DIR="$(cd "$(dirname "$0")" && pwd)"; ADS="${ADS:-$DIR/../submission/ads}"; [ -d "$ADS" ] || ADS="$DIR/../ads"   # public package layout: ads/ at the root
+set -euo pipefail
+DIR="$(cd "$(dirname "$0")" && pwd)"; ADS="${ADS:-$DIR/../ads}"
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"   # override with CHROME=/path/to/chrome (e.g. Chromium on Linux); CHROME_FLAGS adds flags such as --no-sandbox
 CHROME_FLAGS="${CHROME_FLAGS:-}"
 export_ad () { # file w h scale out

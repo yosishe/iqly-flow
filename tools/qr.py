@@ -7,7 +7,7 @@ import sys, pathlib
 if len(sys.argv) < 2:
     sys.exit(__doc__)
 url = sys.argv[1]
-out = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else 'submission/iqly-live-link-qr.png')
+out = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else 'iqly-live-link-qr.png')
 try:
     import qrcode
 except ImportError:

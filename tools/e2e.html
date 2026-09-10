@@ -22,7 +22,7 @@ function ev() { return W.IQLY_EVENTS ? W.IQLY_EVENTS() : JSON.parse(W.localStora
 function names() { return ev().map(function (e) { return e.name; }); }
 function visible(id) { var s = D.getElementById(id); return s && !s.hidden; }
 var loads = 0;   /* page loads since the last wipe(); the product's page_view count must equal it */
-function load(q, extra) { loads++; return new Promise(function (r) { f.onload = function () { W = f.contentWindow; D = f.contentDocument; setTimeout(r, 50); }; var base = (q || (p.get('nodebug') ? '?x=1' : '?debug=1')) + (extra || ''); if (mode === 'nostorage') base += '&nostorage=1'; f.src = '../submission/' + file + base; }); }
+function load(q, extra) { loads++; return new Promise(function (r) { f.onload = function () { W = f.contentWindow; D = f.contentDocument; setTimeout(r, 50); }; var base = (q || (p.get('nodebug') ? '?x=1' : '?debug=1')) + (extra || ''); if (mode === 'nostorage') base += '&nostorage=1'; f.src = '../' + file + base; }); }
 function wipe() { loads = 0; try { Object.keys(W.localStorage).forEach(function (k) { if (k.indexOf('iqly.') === 0) W.localStorage.removeItem(k); }); } catch (e) {} }
 function reloaded() { return new Promise(function (r) { f.onload = function () { W = f.contentWindow; D = f.contentDocument; setTimeout(r, 50); }; }); }
 function count(n) { return names().filter(function (x) { return x === n; }).length; }
@@ -86,7 +86,9 @@ function expectBand(raw, n) { var p = raw / n; return p >= 0.85 ? 'Well above av
     D.querySelectorAll('#opts .opt')[(k0 + 1) % Q[0].options.length].click(); await sleep(400);
     ok('answer_changed logged', names().indexOf('answer_changed') >= 0);
     D.getElementById('btn-back').click(); await sleep(50);
-    D.querySelectorAll('#opts .opt')[k0].click(); await sleep(400);
+    if (mode === 'skipall') D.getElementById('btn-skip').click();
+    else D.querySelectorAll('#opts .opt')[mode === 'allwrong' ? (k0 + 1) % Q[0].options.length : k0].click();
+    await sleep(400);
 
     // resume test: reload mid-quiz and expect the same question
     if (mode === 'resume') {
@@ -96,18 +98,17 @@ function expectBand(raw, n) { var p = raw / n; return p >= 0.85 ? 'Well above av
       ok('resume_restored logged', names().indexOf('resume_restored') >= 0);
     }
 
-    var expectRaw = 1; // Q1 correct
+    var expectRaw = mode === 'allwrong' || mode === 'skipall' ? 0 : 1; // genuinely zero-correct / all-skipped attempts
     for (var i = 1; i < N; i++) {
       var q = Q[i], pick;
-      if (mode === 'skip' && i === 2) { D.getElementById('btn-skip').click(); await sleep(60); continue; }
-      if (mode === 'skipall') { D.getElementById('btn-skip').click(); await sleep(60); continue; }
+      if (mode === 'skip' && i === 2) { D.getElementById('btn-skip').click(); await sleep(400); continue; }
+      if (mode === 'skipall') { D.getElementById('btn-skip').click(); await sleep(400); continue; }
       if (mode === 'allwrong') pick = (q.key + 1) % q.options.length;
       else if (mode === 'mixed') pick = (i % 2 === 0) ? q.key : (q.key + 1) % q.options.length;
       else pick = q.key;
       if (pick === q.key) expectRaw++;
       D.querySelectorAll('#opts .opt')[pick].click(); await sleep(400);
     }
-    if (mode === 'allwrong') expectRaw = 1;
     await sleep(2200);
     ok('calculating → result', visible('s-result'), 'screen=' + st().screen);
     stopAt('result');

@@ -26,7 +26,7 @@ VARIANTS = {
     },
     'variant-1-score-first.html': {
         'variant': 'v1-score-first',
-        'label': 'TEST 1 — result gating: IQ range and rank shown free before any account; the account adds the answer review, history and the updating rank',
+        'label': 'TEST 1 — result gating: IQ range and rank shown free before any account; the account adds the answer review, local history and deletion control',
         'gate': 'score-first', 'disclosure': 'block', 'questionCount': 12,
     },
     'variant-2-eight-questions.html': {
@@ -69,8 +69,7 @@ SCORE_FIRST_BLOCK = ('<strong>What is free, and what needs an account</strong>\n
 # the branch below is kept so that arm can be built without template changes.
 LINE_SMALL = 'Free to take. A free account (email only) at the end shows your IQ range and rank. No payment, ever. A short reasoning test'
 
-OUT = ROOT / 'submission'
-OUT.mkdir(exist_ok=True)
+OUT = ROOT  # The public checkout is the release source of truth.
 
 def must_replace(html, old, new, what):
     if old not in html:
@@ -110,12 +109,6 @@ for fname, cfg in VARIANTS.items():
     html = html.replace('A free 12-question IQ test, no payment.', f'A free {n}-question IQ test, no payment.')
     (OUT / fname).write_text(html, encoding='utf-8')
     print(f'wrote {fname:36s} {len(html)//1024} KB  config={conf}')
-
-# one canonical file per deliverable: remove variant files from earlier builds that are no longer in VARIANTS
-for p in sorted(OUT.glob('variant-*.html')):
-    if p.name not in VARIANTS:
-        p.unlink()
-        print(f'removed stale {p.name}')
 
 # isolation check: diff each variant against the control
 ctrl = (OUT / 'index.html').read_text(encoding='utf-8').splitlines()

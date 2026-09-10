@@ -13,7 +13,7 @@ var file = p.get('file') || 'index.html', W = Number(p.get('w') || 375), H = Num
 var f = document.getElementById('f'); f.style.width = W + 'px'; f.style.height = H + 'px';
 var win, doc;
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-function load() { return new Promise(function (r) { f.onload = function () { win = f.contentWindow; doc = f.contentDocument; setTimeout(r, 50); }; f.src = '../submission/' + file + '?x=1'; }); }
+function load() { return new Promise(function (r) { f.onload = function () { win = f.contentWindow; doc = f.contentDocument; setTimeout(r, 50); }; f.src = '../' + file + '?x=1'; }); }
 function box(id) { var el = doc.getElementById(id); if (!el || el.hidden || el.offsetParent === null) return null; var r = el.getBoundingClientRect(); return { top: Math.round(r.top + win.scrollY), bottom: Math.round(r.bottom + win.scrollY) }; }
 (async function () {
   var out = { file: file, width: W, viewport: H, screen: screen, elements: {} };
@@ -33,7 +33,7 @@ function box(id) { var el = doc.getElementById(id); if (!el || el.hidden || el.o
       }
       for (var i = 0; i < N; i++) { doc.querySelectorAll('#opts .opt')[Q[i].key].click(); await sleep(400); }
       await sleep(2200);
-      if (screen === 'full') {
+      if (screen === 'full' && win.CONFIG.gate !== 'pre-quiz') {
         doc.getElementById('btn-unlock').click(); await sleep(120);
         var em = doc.getElementById('email'); em.value = 'person@example.com'; em.dispatchEvent(new win.Event('input'));
         doc.getElementById('su-form').dispatchEvent(new win.Event('submit', { cancelable: true })); await sleep(800);
