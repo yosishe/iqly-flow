@@ -12,7 +12,7 @@ button,a:focus-visible,select{outline-offset:4px}
 .skip-link:focus{top:12px}
 .toolbar{display:flex;align-items:center;gap:24px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--paper)}
 .brand{font-size:28px;font-weight:bold;color:var(--ink);text-decoration:none}
-.deck-name{font-size:15px;color:var(--muted);margin:0;flex:1}
+.deck-name{font-weight:normal;font-size:15px;color:var(--muted);margin:0;flex:1}
 .toolbar nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .toolbar nav a,.toolbar button{min-height:44px;display:flex;align-items:center;padding:8px 12px;font-size:14px}
 button{cursor:pointer;border:1px solid #aea79b;border-radius:5px;background:var(--paper);color:var(--ink);min-height:44px;padding:9px 18px}
@@ -51,7 +51,7 @@ body.reading .stage,body.reading .slide-controls,body.reading .keyboard-hint,bod
  .toolbar nav a,.toolbar button{padding:8px;font-size:13px}
  main{padding:14px 8px}
  .slide-controls{gap:7px}
- .slide-controls label{display:none}
+ .slide-controls label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
  .slide-controls button{padding:8px 11px}
  #slide-picker{max-width:49vw;font-size:13px}
  .notes{margin:12px 10px}
